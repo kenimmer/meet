@@ -308,7 +308,6 @@ function submitCreate() {
   $('cGo').disabled = true; $('cGo').textContent = 'Creating…'; $('cErr').textContent = '';
   store.set('mwk-owner', f.ownerCode);
   call('createPoll', [f], r => {
-    rememberPoll(r, f.title.trim());
     setHash(r.id + '-' + r.admin);
     showCreated(r, f.title);
   }, msg => { $('cGo').disabled = false; $('cGo').textContent = 'Create poll'; $('cErr').textContent = msg; });
@@ -320,7 +319,7 @@ function showCreated(r, title) {
   $('app').innerHTML =
     '<div class="card"><h2>Share this link</h2><div class="hint" style="margin-bottom:8px">Send it to everyone you\'re inviting, from any email, text or WhatsApp.</div>' +
       '<div class="link"><code>' + esc(share) + '</code><button class="btn small" type="button" id="cp1">Copy</button></div></div>' +
-    '<div class="card"><h2>Your organizer link</h2><div class="hint" style="margin-bottom:8px">Keep this one to yourself. It lets you choose the final time and close the poll. It\'s also saved under "Your polls" on the start page.</div>' +
+    '<div class="card"><h2>Your organizer link</h2><div class="hint" style="margin-bottom:8px">Keep this one to yourself. It lets you choose the final time and close the poll. It\'s also listed under "Your polls" on the start page.</div>' +
       '<div class="link"><code>' + esc(admin) + '</code><button class="btn small ghost" type="button" id="cp2">Copy</button></div></div>' +
     '<button class="btn wide" type="button" id="goPoll">Mark my own times</button>';
   $('cp1').onclick = e => copyText(e.target, share);
@@ -596,30 +595,57 @@ function lengthWords(m) { return m % 60 ? m + '-minute' : (m / 60) + '-hour'; }
 // Half hours someone must be free for a meeting this long (a 15- or 45-minute meeting rounds up).
 function slotsNeeded() { return Math.max(1, Math.min(N(), Math.ceil(S.p.length / STEP))); }
 
-// ---------- Your polls (kept in this browser) ----------
-function rememberPoll(r, title) {
-  const list = (store.get('mwk-polls') || []).filter(x => x.id !== r.id);
-  list.unshift({ id:r.id, admin:r.admin, title:title, at:Date.now() });
-  store.set('mwk-polls', list.slice(0, 30));
-}
+// ---------- Your polls (from the Sheet, unlocked with the owner code) ----------
+// Works on any device. Active polls first; finished and past ones folded underneath.
+let MP = [];
 function myPollsCard() {
-  const list = store.get('mwk-polls') || [];
-  if (!list.length) return '';
-  return '<div class="card people" style="margin-top:16px"><h2>Your polls</h2><ul id="myPolls">' + list.map((x, k) =>
-    '<li style="display:block"><div>' + esc(x.title) + ' <span class="hint">' + new Date(x.at).toLocaleDateString('en-US', { month:'short', day:'numeric' }) + '</span></div>' +
-    '<div class="link" style="margin-top:6px"><code>' + esc(APP_URL + '#' + x.id) + '</code>' +
-    '<button type="button" class="btn small ghost" data-copy="' + k + '">Copy</button>' +
-    '<button type="button" class="btn small" data-open="' + k + '">Open</button></div></li>').join('') + '</ul>' +
-    '<div class="hint" style="margin-top:6px">Saved in this browser only. The link is the one to share; Open takes you to the organizer view.</div></div>';
+  return '<div class="card" style="margin-top:16px"><h2>Your polls</h2><div id="myPollsBody"></div></div>';
 }
 function bindMyPolls() {
-  const box = $('myPolls'); if (!box) return;
-  const list = store.get('mwk-polls') || [];
-  box.onclick = e => {
-    const c = e.target.closest('[data-copy]'), o = e.target.closest('[data-open]');
-    if (c) copyText(c, APP_URL + '#' + list[Number(c.dataset.copy)].id);
-    if (o) { const x = list[Number(o.dataset.open)];
-      setHash(x.id + '-' + x.admin); openPoll(x.id, x.admin); }
+  const body = $('myPollsBody'); if (!body) return;
+  const code = store.get('mwk-owner') || '';
+  if (!code) { askForCode(body, ''); return; }
+  body.innerHTML = '<div class="hint">Loading your polls…</div>';
+  // If the page has moved on by the time the answer arrives, quietly ignore it.
+  call('listPolls', [code], list => { if (!body.isConnected) return; MP = list || []; renderMyPolls(body); },
+    msg => { if (body.isConnected) askForCode(body, msg); });
+}
+function askForCode(body, msg) {
+  body.innerHTML = (msg ? '<div class="err" role="alert" style="margin:0 0 8px">' + esc(msg) + '</div>' : '') +
+    '<div class="hint">Type your owner code in the box above, then tap Show.</div>' +
+    '<button type="button" class="btn small ghost" id="mpShow" style="margin-top:8px">Show my polls</button>';
+  body.querySelector('#mpShow').onclick = () => {
+    const c = $('cCode').value.trim();
+    if (!c) { askForCode(body, 'Please type your owner code first.'); return; }
+    store.set('mwk-owner', c); bindMyPolls();
+  };
+}
+function renderMyPolls(body) {
+  if (!MP.length) { body.innerHTML = '<div class="hint">No polls yet. Your first one will show up here.</div>'; return; }
+  const today = ymd(new Date());
+  const live = [], done = [];
+  MP.forEach((x, k) => (x.status === 'open' && !x.final && x.days[x.days.length - 1] >= today ? live : done).push(k));
+  const item = k => {
+    const x = MP[k], c = (TYPES[x.type] || TYPES[DEFAULT_TYPE]).c;
+    const when = x.days.length > 1 ? dayNum(x.days[0]) + ' – ' + dayNum(x.days[x.days.length - 1]) : dayLong(x.days[0]);
+    const state = x.final ? '<b>Set: ' + dayLong(x.days[x.final.d]) + ', ' + clock(x.start + x.final.s * STEP) + '</b>'
+      : x.status === 'closed' ? 'Closed' : 'Open';
+    return '<li style="display:block">' +
+      '<div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + c + ';margin-right:6px"></span><b>' + esc(x.title) + '</b></div>' +
+      '<div class="hint" style="margin-top:2px">' + esc(x.type) + ' · ' + when + ' · ' + x.answers + ' answered · ' + state + '</div>' +
+      '<div class="link" style="margin-top:6px"><code>' + esc(APP_URL + '#' + x.id) + '</code>' +
+      '<button type="button" class="btn small ghost" data-copy="' + k + '">Copy</button>' +
+      '<button type="button" class="btn small" data-open="' + k + '">Open</button></div></li>';
+  };
+  body.innerHTML =
+    '<div class="people"><ul>' + (live.length ? live.map(item).join('') : '<li><span class="hint">No polls running right now.</span></li>') + '</ul></div>' +
+    (done.length ? '<details style="margin-top:10px"><summary style="padding:12px 0;cursor:pointer;font-weight:600">Finished and past polls (' + done.length + ')</summary>' +
+      '<div class="people"><ul>' + done.map(item).join('') + '</ul></div></details>' : '') +
+    '<div class="hint" style="margin-top:8px">The link is the one to share. Open takes you to your organizer view.</div>';
+  body.onclick = e => {
+    const cp = e.target.closest('[data-copy]'), op = e.target.closest('[data-open]');
+    if (cp) copyText(cp, APP_URL + '#' + MP[Number(cp.dataset.copy)].id);
+    if (op) { const x = MP[Number(op.dataset.open)]; setHash(x.id + '-' + x.admin); openPoll(x.id, x.admin); }
   };
 }
 
