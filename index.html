@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meet with Ken</title>
+<meta name="apple-mobile-web-app-title" content="Meet with Ken">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --ink:#1b2333; --quiet:#5f6368; --line:#e3e6ea; --bg:#ffffff; --soft:#f4f6f9;
+          --c:#0f766e; --cfg:#ffffff; --heat:#0f766e; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+         color:var(--ink); background:var(--soft); font-size:16px; line-height:1.4; }
+  button, input, select, textarea { font:inherit; color:inherit; }
+  .band { background:var(--c); color:var(--cfg); padding:16px 16px 14px; }
+  .band .kicker { font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:.85; }
+  .band h1 { font-family:"EB Garamond", Georgia, serif; font-weight:600; font-size:26px; margin:2px 0 0; line-height:1.15; }
+  .band .sub { font-size:14px; opacity:.9; margin-top:4px; }
+  main { max-width:640px; margin:0 auto; padding:12px 12px 120px; }
+  .card { background:var(--bg); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:12px; }
+  .card h2 { font-size:16px; margin:0 0 10px; }
+  label.f { display:block; font-size:14px; font-weight:600; margin:12px 0 4px; }
+  label.f:first-child { margin-top:0; }
+  .hint { font-size:13px; color:var(--quiet); }
+  input[type=text], input[type=email], input[type=date], select, textarea {
+    width:100%; font-size:16px; padding:10px 12px; border:1px solid #c9ced6; border-radius:10px; background:#fff; }
+  textarea { min-height:70px; resize:vertical; }
+  .two { display:flex; gap:10px; } .two > div { flex:1; min-width:0; }
+  .btn { border:0; border-radius:12px; padding:12px 16px; font-size:16px; font-weight:600;
+         background:var(--c); color:var(--cfg); cursor:pointer; }
+  .btn.wide { width:100%; }
+  .btn.ghost { background:#fff; color:var(--ink); border:1px solid #c9ced6; font-weight:500; }
+  .btn.small { padding:8px 12px; font-size:14px; border-radius:10px; }
+  .btn:disabled { opacity:.5; }
+  .seg { display:flex; background:var(--soft); border-radius:12px; padding:3px; gap:3px; }
+  .seg button { flex:1; border:0; background:none; padding:9px 6px; border-radius:10px; font-size:15px; cursor:pointer; }
+  .seg button[aria-pressed=true] { background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.12); font-weight:600; }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; }
+  .chip { border:2px solid transparent; border-radius:999px; padding:6px 12px; font-size:14px; cursor:pointer; }
+  .chip[aria-pressed=true] { border-color:var(--ink); box-shadow:0 0 0 2px #fff inset; }
+  /* month calendar */
+  .cal-head { display:flex; justify-content:space-between; align-items:center; margin:8px 0 6px; font-weight:600; }
+  .cal-head button { border:1px solid var(--line); background:#fff; border-radius:10px; width:40px; height:36px; font-size:18px; cursor:pointer; }
+  .cal { display:grid; grid-template-columns:repeat(7, 1fr); gap:4px; text-align:center; }
+  .cal .dow { font-size:12px; color:var(--quiet); padding:4px 0; }
+  .cal button { aspect-ratio:1; border:1px solid var(--line); background:#fff; border-radius:10px; font-size:15px; cursor:pointer; padding:0; }
+  .cal button.on { background:var(--c); color:var(--cfg); border-color:var(--c); font-weight:600; }
+  .cal button:disabled { opacity:.3; cursor:default; }
+  /* day tabs */
+  .days { display:flex; gap:6px; overflow-x:auto; padding:2px 0 8px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  .days::-webkit-scrollbar { display:none; }
+  .day { flex:none; min-width:62px; border:1px solid var(--line); background:#fff; border-radius:12px; padding:6px 8px;
+         text-align:center; cursor:pointer; position:relative; }
+  .day b { display:block; font-size:13px; } .day span { font-size:13px; color:var(--quiet); }
+  .day[aria-pressed=true] { background:var(--ink); color:#fff; border-color:var(--ink); }
+  .day[aria-pressed=true] span { color:#d6dae0; }
+  .day .pip { position:absolute; top:5px; right:6px; width:7px; height:7px; border-radius:50%; background:var(--heat); }
+  .day .best { display:block; font-size:11px; margin-top:2px; }
+  .tabs { position:sticky; top:0; z-index:3; background:var(--soft); padding:8px 0; }
+  .tools { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
+  /* time rows */
+  .rows { border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff; user-select:none; }
+  .row { display:flex; align-items:center; width:100%; min-height:44px; border:0; border-top:1px solid var(--line);
+         background:#fff; padding:0 12px; text-align:left; cursor:pointer; gap:10px; }
+  .row:first-child { border-top:0; }
+  .row.hour { border-top-color:#c9ced6; }
+  .row .t { width:72px; flex:none; font-size:14px; color:var(--quiet); font-variant-numeric:tabular-nums; }
+  .row .v { flex:1; font-size:14px; }
+  .row.on { background:var(--heat); color:#fff; }
+  .row.on .t { color:rgba(255,255,255,.85); }
+  .row .bar { flex:1; height:26px; border-radius:7px; background:var(--soft); position:relative; overflow:hidden; }
+  .row .bar i { position:absolute; inset:0 auto 0 0; background:var(--heat); border-radius:7px; }
+  .row .n { width:48px; flex:none; text-align:right; font-size:14px; font-variant-numeric:tabular-nums; }
+  .row.sel { outline:2px solid var(--ink); outline-offset:-2px; }
+  .who { padding:10px 12px 12px; background:var(--soft); font-size:14px; border-top:1px solid var(--line); }
+  .who .yes { color:var(--ink); } .who .no { color:var(--quiet); margin-top:4px; }
+  /* overview heatmap */
+  .heat { display:grid; gap:2px; }
+  .heat .h { font-size:10px; color:var(--quiet); text-align:center; white-space:nowrap; overflow:hidden; }
+  .heat .tl { font-size:10px; color:var(--quiet); text-align:right; padding-right:4px; line-height:9px; }
+  .heat button { height:9px; border:0; padding:0; border-radius:2px; background:var(--soft); cursor:pointer; }
+  .legend { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--quiet); margin-top:8px; }
+  .legend i { width:16px; height:10px; border-radius:2px; display:inline-block; }
+  .best li { list-style:none; border-top:1px solid var(--line); padding:10px 0; display:flex; gap:10px; align-items:center; }
+  .best li:first-child { border-top:0; padding-top:2px; }
+  .best ul { margin:0; padding:0; }
+  .best .when { font-weight:600; } .best .meta { font-size:13px; color:var(--quiet); }
+  .best .grow { flex:1; min-width:0; }
+  .pill { display:inline-block; font-size:12px; font-weight:600; padding:2px 8px; border-radius:999px; background:var(--soft); }
+  .final { background:var(--ink); color:#fff; border:0; }
+  .final a { color:#fff; }
+  .link { display:flex; gap:8px; align-items:center; }
+  .link code { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px;
+               background:var(--soft); padding:10px; border-radius:8px; }
+  .people li { list-style:none; display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-top:1px solid var(--line); gap:8px; }
+  .people ul { margin:0; padding:0; }
+  .people li:first-child { border-top:0; }
+  .bar-foot { position:fixed; left:0; right:0; bottom:0; background:#fff; border-top:1px solid var(--line);
+              padding:10px 12px calc(10px + env(safe-area-inset-bottom)); z-index:5; display:none; }
+  .bar-foot .in { max-width:640px; margin:0 auto; display:flex; gap:10px; align-items:center; }
+  .bar-foot .msg { flex:1; font-size:14px; color:var(--quiet); }
+  .err { color:#b10202; font-size:14px; margin-top:8px; }
+  .center { text-align:center; padding:40px 16px; color:var(--quiet); }
+  .sr { position:absolute; left:-9999px; }
+</style>
+</head>
+<body>
+<header class="band" id="band">
+  <div class="kicker">Meet with Ken</div>
+  <h1 id="title">Find a time together</h1>
+  <div class="sub" id="sub"></div>
+</header>
+<main id="app"><div class="center">Loading…</div></main>
+<div class="bar-foot" id="foot"><div class="in"><div class="msg" id="footMsg"></div>
+  <button class="btn" id="saveBtn" type="button">Save my times</button></div></div>
+
+<script>
+// ▼▼▼ Paste your Apps Script web app address here (Deploy → Manage deployments → the URL ending in /exec)
+const API_URL = 'https://script.google.com/macros/s/AKfycbyPl1GOfksqD_HzN1LyYJFUAOHygR0mFkKHokIfDHCfV7dEADN3gGcagUmHT5I6ky6u5Q/exec';
+// ▲▲▲
+const APP_URL = location.origin + location.pathname;   // this page's own address, used in share links
+const STEP = 30, MAX_DAYS = 15;
+
+// Meeting types and their colors. Must match TYPE_NAMES in Code.gs.
+// A type can also take fg (text color) and heat (a deeper "free" fill) if it's ever a light color.
+const TYPES = {
+  'Personal':           { c:'#0f766e', fg:'#fff' },   // teal
+  'Performance Eating': { c:'#2e7d32', fg:'#fff' },   // green
+  'MKP':                { c:'#0b2e6b', fg:'#fff' },   // deep blue
+  'TOLE':               { c:'#3b2a8c', fg:'#fff' },   // deep blue-purple
+  'Osceola Lake':       { c:'#1f78b4', fg:'#fff' },   // lake blue
+  'Body Electric':      { c:'#6a1b9a', fg:'#fff' }    // royal purple
+};
+const DEFAULT_TYPE = 'Personal';
+const LENGTHS = [[15,'15 minutes'],[30,'30 minutes'],[45,'45 minutes'],[60,'1 hour'],[90,'1½ hours'],[120,'2 hours']];
+const ZONES = { 'Eastern':'America/New_York', 'Central':'America/Chicago', 'Mountain':'America/Denver',
+  'Arizona':'America/Phoenix', 'Pacific':'America/Los_Angeles', 'Hawaii':'Pacific/Honolulu' };
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+
+function setType(name) {
+  const c = TYPES[name] || TYPES[DEFAULT_TYPE];
+  const r = document.documentElement.style;
+  r.setProperty('--c', c.c); r.setProperty('--cfg', c.fg); r.setProperty('--heat', c.heat || c.c);
+}
+function parseDay(s) { const p = s.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
+function ymd(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function dayShort(s) { return parseDay(s).toLocaleDateString('en-US', { weekday:'short' }); }
+function dayNum(s) { return parseDay(s).toLocaleDateString('en-US', { month:'short', day:'numeric' }); }
+function dayLong(s) { return parseDay(s).toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' }); }
+function clock(m, withAmPm) {
+  m = m % 1440; const h = Math.floor(m / 60), mm = m % 60, h12 = ((h + 11) % 12) + 1;
+  return h12 + ':' + String(mm).padStart(2, '0') + (withAmPm === false ? '' : (h < 12 ? ' am' : ' pm'));
+}
+function span(a, b) { // "6:00 – 8:30 pm", or both am/pm when they differ
+  const sameHalf = (Math.floor(a / 720) === Math.floor((b - 1) / 720)) && b % 1440 !== 0;
+  return clock(a, !sameHalf) + ' – ' + (b === 1440 ? '12:00 am' : clock(b));
+}
+function copyText(btn, text) {
+  const label = btn.textContent;
+  const done = ok => { btn.textContent = ok ? 'Copied' : 'Press and hold to copy'; setTimeout(() => btn.textContent = label, 2500); };
+  const fallback = () => {
+    const t = document.createElement('textarea'); t.value = text; t.setAttribute('readonly', '');
+    t.style.position = 'fixed'; t.style.opacity = '0'; document.body.appendChild(t);
+    t.select(); t.setSelectionRange(0, text.length);
+    let ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+    t.remove(); done(ok);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(() => done(true), fallback);
+  else fallback();
+}
+function call(fn, args, ok, bad) {
+  // Plain-text POST with no cookies: no Google sign-in is ever involved.
+  fetch(API_URL, { method:'POST', body: JSON.stringify({ fn:fn, args:args }) })
+    .then(r => r.json())
+    .then(res => res, () => null)
+    .then(res => {
+      if (!res) return bad('Couldn\'t reach the server. Check your connection and try again.');
+      if (res.ok) ok(res.data); else bad(res.error || 'Something went wrong. Try again in a moment.');
+    });
+}
+function setHash(h) { history.replaceState(null, '', h ? '#' + h : location.pathname); }
+
+// ===================== Create a poll =====================
+const C = { type:DEFAULT_TYPE, mode:'row', start:'', count:5, picked:[], month:null };
+
+function renderCreate() {
+  setType(C.type);
+  $('title').textContent = 'Find a time together';
+  $('sub').textContent = 'Set up a poll. Everyone marks when they\'re free, and you see where it overlaps.';
+  const t = new Date(); t.setDate(t.getDate() + 1);
+  if (!C.start) C.start = ymd(t);
+  if (!C.month) C.month = new Date(t.getFullYear(), t.getMonth(), 1);
+  const times = []; for (let m = 0; m <= 1440; m += STEP) times.push(m);
+  const opt = (m, sel) => '<option value="' + m + '"' + (m === sel ? ' selected' : '') + '>' + (m === 1440 ? 'Midnight' : m === 0 ? 'Midnight (start)' : clock(m)) + '</option>';
+
+  $('app').innerHTML =
+    '<div class="card"><h2>What\'s it for?</h2>' +
+      '<label class="f" for="cTitle">Meeting name</label><input type="text" id="cTitle" maxlength="120" placeholder="Coffee catch-up">' +
+      '<label class="f">Type</label><div class="chips" id="cType">' +
+        Object.keys(TYPES).map(n => '<button type="button" class="chip" data-n="' + n + '" aria-pressed="' + (n === C.type) +
+          '" style="background:' + TYPES[n].c + ';color:' + TYPES[n].fg + '">' + n + '</button>').join('') + '</div>' +
+      '<label class="f" for="cNote">Note for everyone <span class="hint">(optional)</span></label><textarea id="cNote" maxlength="500" placeholder="Zoom or phone, and what we\'ll cover"></textarea>' +
+    '</div>' +
+    '<div class="card"><h2>Which days?</h2>' +
+      '<div class="seg" id="cMode"><button type="button" data-m="row" aria-pressed="' + (C.mode === 'row') + '">Days in a row</button>' +
+      '<button type="button" data-m="pick" aria-pressed="' + (C.mode === 'pick') + '">Pick days</button></div>' +
+      '<div id="cDays"></div>' +
+    '</div>' +
+    '<div class="card"><h2>What hours?</h2>' +
+      '<div class="two"><div><label class="f" for="cStart">Earliest</label><select id="cStart">' + times.slice(0, -1).map(m => opt(m, 540)).join('') + '</select></div>' +
+      '<div><label class="f" for="cEnd">Latest</label><select id="cEnd">' + times.slice(1).map(m => opt(m, 1260)).join('') + '</select></div></div>' +
+      '<div class="two"><div><label class="f" for="cLen">Meeting length</label><select id="cLen">' +
+        LENGTHS
+          .map(x => '<option value="' + x[0] + '"' + (x[0] === 60 ? ' selected' : '') + '>' + x[1] + '</option>').join('') + '</select></div>' +
+      '<div><label class="f" for="cTz">Time zone</label><select id="cTz">' +
+        Object.keys(ZONES).map(z => '<option>' + z + '</option>').join('') + '</select></div></div>' +
+    '</div>' +
+    '<div class="card"><label class="f" for="cCode">Owner code</label><input type="text" id="cCode" maxlength="60" autocomplete="off" value="' + esc(store.get('mwk-owner') || '') + '">' +
+      '<div class="hint" style="margin-top:6px">Only needed to create polls. This browser remembers it.</div></div>' +
+    '<button class="btn wide" type="button" id="cGo">Create poll</button><div class="err" id="cErr" role="alert"></div>' +
+    myPollsCard();
+
+  drawDays();
+  bindMyPolls();
+  $('cType').onclick = e => { const b = e.target.closest('.chip'); if (!b) return;
+    C.type = b.dataset.n; setType(C.type);
+    $('cType').querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', x === b)); };
+  $('cMode').onclick = e => { const b = e.target.closest('button'); if (!b) return;
+    C.mode = b.dataset.m; $('cMode').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); drawDays(); };
+  $('cGo').onclick = submitCreate;
+}
+
+function drawDays() {
+  const box = $('cDays');
+  if (C.mode === 'row') {
+    box.innerHTML = '<div class="two"><div><label class="f" for="cFrom">First day</label><input type="date" id="cFrom" value="' + C.start + '" min="' + ymd(new Date()) + '"></div>' +
+      '<div><label class="f" for="cCount">How many days</label><select id="cCount">' +
+      Array.from({ length:MAX_DAYS }, (_, i) => '<option' + (i + 1 === C.count ? ' selected' : '') + '>' + (i + 1) + '</option>').join('') +
+      '</select></div></div><div class="hint" id="cRange" style="margin-top:8px"></div>';
+    const upd = () => { C.start = $('cFrom').value || C.start; C.count = Number($('cCount').value);
+      const d = rowDays(); $('cRange').textContent = d.length ? dayLong(d[0]) + ' through ' + dayLong(d[d.length - 1]) : ''; };
+    $('cFrom').onchange = upd; $('cCount').onchange = upd; upd();
+  } else {
+    const m = C.month, first = new Date(m.getFullYear(), m.getMonth(), 1), today = ymd(new Date());
+    const cells = [];
+    for (let i = 0; i < first.getDay(); i++) cells.push('<span></span>');
+    const last = new Date(m.getFullYear(), m.getMonth() + 1, 0).getDate();
+    for (let d = 1; d <= last; d++) {
+      const k = ymd(new Date(m.getFullYear(), m.getMonth(), d)), on = C.picked.indexOf(k) !== -1;
+      cells.push('<button type="button" data-k="' + k + '" class="' + (on ? 'on' : '') + '" aria-pressed="' + on + '"' + (k < today ? ' disabled' : '') + '>' + d + '</button>');
+    }
+    box.innerHTML = '<div class="cal-head"><button type="button" id="calPrev" aria-label="Previous month">‹</button>' +
+      '<span>' + m.toLocaleDateString('en-US', { month:'long', year:'numeric' }) + '</span>' +
+      '<button type="button" id="calNext" aria-label="Next month">›</button></div>' +
+      '<div class="cal">' + 'SMTWTFS'.split('').map(x => '<div class="dow">' + x + '</div>').join('') + cells.join('') + '</div>' +
+      '<div class="hint" style="margin-top:8px">' + C.picked.length + ' of ' + MAX_DAYS + ' days picked. Tap a day to add or remove it.</div>';
+    $('calPrev').onclick = () => { C.month = new Date(m.getFullYear(), m.getMonth() - 1, 1); drawDays(); };
+    $('calNext').onclick = () => { C.month = new Date(m.getFullYear(), m.getMonth() + 1, 1); drawDays(); };
+    box.querySelector('.cal').onclick = e => { const b = e.target.closest('button[data-k]'); if (!b) return;
+      const k = b.dataset.k, i = C.picked.indexOf(k);
+      if (i !== -1) C.picked.splice(i, 1); else if (C.picked.length < MAX_DAYS) C.picked.push(k);
+      C.picked.sort(); drawDays(); };
+  }
+}
+function rowDays() {
+  const out = [], d = parseDay(C.start);
+  for (let i = 0; i < C.count; i++) { out.push(ymd(d)); d.setDate(d.getDate() + 1); }
+  return out;
+}
+
+function submitCreate() {
+  const f = { title:$('cTitle').value, note:$('cNote').value, type:C.type,
+    days: C.mode === 'row' ? rowDays() : C.picked.slice(),
+    start:Number($('cStart').value), end:Number($('cEnd').value), length:Number($('cLen').value),
+    tz:$('cTz').value, ownerCode:$('cCode').value.trim() };
+  if (f.end <= f.start) { $('cErr').textContent = 'The latest time needs to be after the earliest time.'; return; }
+  if (!f.days.length) { $('cErr').textContent = 'Please pick at least one day.'; return; }
+  $('cGo').disabled = true; $('cGo').textContent = 'Creating…'; $('cErr').textContent = '';
+  store.set('mwk-owner', f.ownerCode);
+  call('createPoll', [f], r => {
+    rememberPoll(r, f.title.trim());
+    setHash(r.id + '-' + r.admin);
+    showCreated(r, f.title);
+  }, msg => { $('cGo').disabled = false; $('cGo').textContent = 'Create poll'; $('cErr').textContent = msg; });
+}
+
+function showCreated(r, title) {
+  const share = APP_URL + '#' + r.id, admin = share + '-' + r.admin;
+  $('title').textContent = title; $('sub').textContent = 'Your poll is ready.';
+  $('app').innerHTML =
+    '<div class="card"><h2>Share this link</h2><div class="hint" style="margin-bottom:8px">Send it to everyone you\'re inviting, from any email, text or WhatsApp.</div>' +
+      '<div class="link"><code>' + esc(share) + '</code><button class="btn small" type="button" id="cp1">Copy</button></div></div>' +
+    '<div class="card"><h2>Your organizer link</h2><div class="hint" style="margin-bottom:8px">Keep this one to yourself. It lets you choose the final time and close the poll. It\'s also saved under "Your polls" on the start page.</div>' +
+      '<div class="link"><code>' + esc(admin) + '</code><button class="btn small ghost" type="button" id="cp2">Copy</button></div></div>' +
+    '<button class="btn wide" type="button" id="goPoll">Mark my own times</button>';
+  $('cp1').onclick = e => copyText(e.target, share);
+  $('cp2').onclick = e => copyText(e.target, admin);
+  $('goPoll').onclick = () => openPoll(r.id, r.admin);
+}
+
+// ===================== A poll =====================
+const S = { id:'', admin:'', p:null, me:null, mine:null, dirty:false, tab:'mine', day:0, sel:null, saving:false };
+const N = () => (S.p.end - S.p.start) / STEP;
+
+function openPoll(id, admin) {
+  S.id = id; S.admin = admin || '';
+  S.me = store.get('mf-me');
+  $('app').innerHTML = '<div class="center">Opening the poll…</div>';
+  call('getPoll', [id, S.admin, S.me && S.me.email], p => {
+    if (!p) { $('app').innerHTML = '<div class="center">We couldn\'t find this poll. Check the link and try again.</div>'; return; }
+    loadPoll(p);
+    if (S.p.final || S.p.status === 'closed' || (S.mine && S.mine.indexOf(1) !== -1 && !S.dirty)) S.tab = 'group';
+    renderPoll();
+  }, () => { $('app').innerHTML = '<div class="center">Something went wrong. Try again in a moment.</div>'; });
+}
+
+function loadPoll(p) {
+  S.p = p; setType(p.type);
+  const mineRow = p.people.filter(x => x.me)[0];
+  if (!S.dirty) S.mine = mineRow ? mineRow.slots.split('').map(Number) : new Array(p.days.length * N()).fill(0);
+  if (S.day >= p.days.length) S.day = 0;
+  $('title').textContent = p.title;
+  $('sub').textContent = 'With ' + p.organizer + ' · times are ' + p.tz;
+}
+
+function renderPoll() {
+  const p = S.p;
+  let h = '';
+  if (p.final) h += finalCard();
+  if (p.note) h += '<div class="card" style="white-space:pre-wrap">' + esc(p.note) + '</div>';
+  if (p.status === 'closed' && !p.final) h += '<div class="card"><b>This poll is closed.</b> <span class="hint">Answers can no longer change.</span></div>';
+  h += '<div class="tabs"><div class="seg" id="tabs"><button type="button" data-t="mine" aria-pressed="' + (S.tab === 'mine') + '">My times</button>' +
+       '<button type="button" data-t="group" aria-pressed="' + (S.tab === 'group') + '">Group (' + p.people.length + ')</button></div></div>';
+  h += '<div id="pane"></div>';
+  $('app').innerHTML = h;
+  $('tabs').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.tab = b.dataset.t; S.sel = null; renderPoll(); };
+  if (S.tab === 'mine') renderMine(); else renderGroup();
+  updateFoot();
+  if (p.final) bindFinal();
+}
+
+function finalCard() {
+  const f = S.p.final, d = S.p.days[f.d], a = S.p.start + f.s * STEP, b = a + S.p.length;
+  return '<div class="card final"><div class="hint" style="color:#d6dae0">Meeting time chosen</div>' +
+    '<div style="font-size:20px;font-weight:600;margin:4px 0 8px">' + dayLong(d) + ', ' + span(a, b) + ' ' + esc(S.p.tz) + '</div>' +
+    '<a href="' + esc(calLink(d, a, b)) + '" target="_blank" rel="noopener">Add to Google Calendar</a>' +
+    (S.p.isAdmin ? ' &nbsp;·&nbsp; <a href="#" id="unfinal">Undo</a>' : '') + '</div>';
+}
+function bindFinal() {
+  const u = $('unfinal'); if (u) u.onclick = e => { e.preventDefault(); adminDo('final', null); };
+}
+function calLink(day, a, b) {
+  const stamp = m => day.replace(/-/g, '') + 'T' + String(Math.floor(m / 60)).padStart(2, '0') + String(m % 60).padStart(2, '0') + '00';
+  let end = stamp(b);
+  if (b >= 1440) { const n = parseDay(day); n.setDate(n.getDate() + 1); end = ymd(n).replace(/-/g, '') + 'T' + String(Math.floor((b - 1440) / 60)).padStart(2, '0') + String((b - 1440) % 60).padStart(2, '0') + '00'; }
+  return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(S.p.title) +
+    '&dates=' + stamp(a) + '/' + end + '&ctz=' + encodeURIComponent(ZONES[S.p.tz] || 'America/New_York') +
+    (S.p.note ? '&details=' + encodeURIComponent(S.p.note) : '');
+}
+
+function dayTabs(extra) {
+  return '<div class="days" id="dayTabs">' + S.p.days.map((d, i) =>
+    '<button type="button" class="day" data-i="' + i + '" aria-pressed="' + (i === S.day) + '">' +
+    (extra ? extra(i) : '') + '<b>' + dayShort(d) + '</b><span>' + dayNum(d) + '</span></button>').join('') + '</div>';
+}
+function bindDayTabs(redraw) {
+  $('dayTabs').onclick = e => { const b = e.target.closest('.day'); if (!b) return; S.day = Number(b.dataset.i); S.sel = null; redraw(); };
+  const cur = $('dayTabs').querySelector('[aria-pressed=true]'); if (cur) cur.scrollIntoView({ block:'nearest', inline:'center' });
+}
+
+// ---------- My times ----------
+function renderMine() {
+  const pane = $('pane'), n = N(), p = S.p;
+  if (!S.me || !S.me.name || !S.me.email) { renderWho(); return; }
+  const locked = p.status === 'closed';
+  const base = S.day * n;
+  let rows = '';
+  for (let i = 0; i < n; i++) {
+    const m = p.start + i * STEP, on = S.mine[base + i] === 1;
+    rows += '<button type="button" class="row' + (on ? ' on' : '') + (m % 60 === 0 ? ' hour' : '') + '" data-i="' + i + '"' + (locked ? ' disabled' : '') + '>' +
+      '<span class="t">' + clock(m) + '</span><span class="v">' + (on ? 'Free' : '') + '</span></button>';
+  }
+  pane.innerHTML =
+    '<div class="hint" style="margin-bottom:8px">Answering as <b>' + esc(S.me.name) + '</b> · <a href="#" id="notMe">not you?</a></div>' +
+    dayTabs(i => S.mine.slice(i * n, i * n + n).indexOf(1) !== -1 ? '<span class="pip"></span>' : '') +
+    (locked ? '' : '<div class="tools"><button type="button" class="btn small ghost" data-a="all">Free all day</button>' +
+      '<button type="button" class="btn small ghost" data-a="clear">Clear day</button>' +
+      (p.days.length > 1 ? '<button type="button" class="btn small ghost" data-a="copy">Copy to every day</button>' : '') + '</div>') +
+    '<div class="hint" style="margin-bottom:6px">Tap each half hour you\'re free on ' + dayLong(p.days[S.day]) + '.</div>' +
+    '<div class="rows" id="rows">' + rows + '</div>';
+  bindDayTabs(renderMine);
+  $('notMe').onclick = e => { e.preventDefault(); S.me = null; S.dirty = false; S.mine = null; store.set('mf-me', null); openPoll(S.id, S.admin); };
+  if (locked) return;
+  pane.querySelector('.tools').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const a = b.dataset.a, day = S.mine.slice(base, base + n);
+    if (a === 'all' || a === 'clear') for (let i = 0; i < n; i++) S.mine[base + i] = a === 'all' ? 1 : 0;
+    if (a === 'copy') for (let d = 0; d < p.days.length; d++) for (let i = 0; i < n; i++) S.mine[d * n + i] = day[i];
+    S.dirty = true; renderMine(); updateFoot();
+  };
+  bindPaint($('rows'), base);
+}
+
+// Tap toggles a half hour. With a mouse you can also click and drag to paint a stretch.
+function bindPaint(box, base) {
+  let painting = false, val = 1, mouse = false;
+  const set = btn => { const i = Number(btn.dataset.i); if (S.mine[base + i] === val) return;
+    S.mine[base + i] = val; btn.classList.toggle('on', val === 1); btn.querySelector('.v').textContent = val ? 'Free' : '';
+    S.dirty = true; updateFoot(); };
+  box.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'mouse') return;
+    const b = e.target.closest('.row'); if (!b) return;
+    mouse = true; painting = true; val = S.mine[base + Number(b.dataset.i)] ? 0 : 1; set(b); e.preventDefault();
+  });
+  box.addEventListener('pointerover', e => { if (!painting) return; const b = e.target.closest('.row'); if (b) set(b); });
+  window.addEventListener('pointerup', () => { if (painting) { painting = false; refreshPips(); } });
+  box.addEventListener('click', e => {
+    if (mouse) { mouse = false; return; }
+    const b = e.target.closest('.row'); if (!b) return;
+    val = S.mine[base + Number(b.dataset.i)] ? 0 : 1; set(b); refreshPips();
+  });
+}
+function refreshPips() {
+  const n = N(), b = $('dayTabs').querySelectorAll('.day')[S.day];
+  const has = S.mine.slice(S.day * n, S.day * n + n).indexOf(1) !== -1, pip = b.querySelector('.pip');
+  if (has && !pip) b.insertAdjacentHTML('afterbegin', '<span class="pip"></span>'); else if (!has && pip) pip.remove();
+}
+
+function renderWho() {
+  $('pane').innerHTML = '<div class="card"><h2>Who\'s answering?</h2>' +
+    '<label class="f" for="wName">Your name</label><input type="text" id="wName" maxlength="60" autocomplete="name">' +
+    '<label class="f" for="wEmail">Your email</label><input type="email" id="wEmail" maxlength="120" autocomplete="email">' +
+    '<div class="hint" style="margin-top:6px">Your email is only used to bring back your own answers. Others see just your name.</div>' +
+    '<button class="btn wide" type="button" id="wGo" style="margin-top:12px">Continue</button><div class="err" id="wErr" role="alert"></div></div>';
+  $('wGo').onclick = () => {
+    const name = $('wName').value.trim(), email = $('wEmail').value.trim().toLowerCase();
+    if (!name) { $('wErr').textContent = 'Please add your name.'; return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { $('wErr').textContent = 'Please add a valid email.'; return; }
+    S.me = { name:name, email:email }; store.set('mf-me', S.me); S.dirty = false;
+    openPoll(S.id, S.admin);
+  };
+}
+
+function updateFoot() {
+  const show = S.tab === 'mine' && S.me && S.p && S.p.status !== 'closed' && (S.dirty || S.saving);
+  $('foot').style.display = show ? 'block' : 'none';
+  $('footMsg').textContent = S.saving ? 'Saving…' : 'You have changes that aren\'t saved yet.';
+  $('saveBtn').disabled = S.saving;
+}
+$('saveBtn').onclick = () => {
+  S.saving = true; updateFoot();
+  call('saveResponse', [S.id, S.me.name, S.me.email, S.mine.join(''), S.admin], p => {
+    S.saving = false; S.dirty = false; loadPoll(p); S.tab = 'group'; renderPoll();
+    window.scrollTo(0, 0);
+  }, msg => { S.saving = false; updateFoot(); $('footMsg').textContent = msg; });
+};
+
+// ---------- Group ----------
+function freeAt(d, i) { const n = N(); return S.p.people.filter(x => x.slots.charAt(d * n + i) === '1'); }
+
+function bestTimes() {
+  const p = S.p, n = N(), L = slotsNeeded(), out = [];
+  for (let d = 0; d < p.days.length; d++) {
+    let cur = null;
+    for (let i = 0; i + L <= n; i++) {
+      const who = p.people.map((x, k) => {
+        for (let j = i; j < i + L; j++) if (x.slots.charAt(d * n + j) !== '1') return -1;
+        return k; }).filter(k => k !== -1);
+      const key = who.join(',');
+      if (cur && cur.key === key) { cur.e = i + L; continue; }
+      if (cur && cur.who.length) out.push(cur);
+      cur = { d:d, s:i, e:i + L, who:who, key:key };
+    }
+    if (cur && cur.who.length) out.push(cur);
+  }
+  out.sort((a, b) => b.who.length - a.who.length || (b.e - b.s) - (a.e - a.s) || a.d - b.d || a.s - b.s);
+  return out.slice(0, 5);
+}
+
+function renderGroup() {
+  const p = S.p, n = N(), total = p.people.length, pane = $('pane');
+  if (!total) {
+    pane.innerHTML = '<div class="card center" style="padding:24px">No one has answered yet. Share the link and check back.</div>' + adminCard();
+    bindAdmin(); return;
+  }
+  let h = S.dirty ? '<div class="card hint">Your latest changes aren\'t saved, so they don\'t show here yet.</div>' : '';
+
+  // Best times
+  const best = bestTimes(), L = slotsNeeded();
+  h += '<div class="card best"><h2>Best times for a ' + lengthWords(p.length) + ' meeting</h2>';
+  if (!best.length) h += '<div class="hint">No ' + lengthWords(p.length) + ' stretch works for anyone yet.</div>';
+  else h += '<ul>' + best.map((b, k) => {
+    const missing = p.people.filter((x, i) => b.who.indexOf(i) === -1).map(x => x.name);
+    return '<li><div class="grow"><div class="when">' + dayLong(p.days[b.d]) + ', ' + span(p.start + b.s * STEP, p.start + b.e * STEP) + '</div>' +
+      '<div class="meta">' + (b.who.length === total ? '<span class="pill">Everyone</span>' : b.who.length + ' of ' + total + ' free · missing ' + esc(missing.join(', '))) + '</div></div>' +
+      (p.isAdmin ? '<button type="button" class="btn small" data-pick="' + k + '">Choose</button>' : '') + '</li>';
+  }).join('') + '</ul>' + (p.isAdmin ? '<div class="hint" style="margin-top:6px">Choose sets the meeting at the start of that stretch. For a later start, tap a time in the day view below.</div>' : '');
+  h += '</div>';
+
+  // Overview heatmap: every day at a glance
+  const cols = p.days.length;
+  h += '<div class="card"><h2>All days at a glance</h2><div class="heat" style="grid-template-columns:44px repeat(' + cols + ', 1fr)"><span></span>' +
+    p.days.map(d => '<span class="h">' + dayShort(d).charAt(0) + parseDay(d).getDate() + '</span>').join('');
+  for (let i = 0; i < n; i++) {
+    const m = p.start + i * STEP;
+    h += '<span class="tl">' + (m % 120 === 0 || i === 0 ? clock(m).replace(':00', '') : '') + '</span>';
+    for (let d = 0; d < cols; d++) {
+      const c = freeAt(d, i).length;
+      h += '<button type="button" data-d="' + d + '" data-i="' + i + '" aria-label="' + dayLong(p.days[d]) + ' ' + clock(m) + ', ' + c + ' free"' +
+        ' style="' + (c ? 'background:var(--heat);opacity:' + (0.18 + 0.82 * c / total).toFixed(2) : '') + '"></button>';
+    }
+  }
+  h += '</div><div class="legend"><i style="background:var(--soft)"></i>nobody<i style="background:var(--heat);opacity:.45"></i>some<i style="background:var(--heat)"></i>everyone · tap to open that day</div></div>';
+
+  // One day in detail
+  h += '<div class="card"><h2>Day by day</h2>' +
+    dayTabs() + '<div class="rows" id="grows">';
+  for (let i = 0; i < n; i++) {
+    const m = p.start + i * STEP, free = freeAt(S.day, i), sel = S.sel === i;
+    h += '<button type="button" class="row' + (m % 60 === 0 ? ' hour' : '') + (sel ? ' sel' : '') + '" data-i="' + i + '">' +
+      '<span class="t">' + clock(m) + '</span><span class="bar"><i style="width:' + (100 * free.length / total) + '%"></i></span>' +
+      '<span class="n">' + free.length + '/' + total + '</span></button>';
+    if (sel) {
+      const no = p.people.filter(x => free.indexOf(x) === -1);
+      h += '<div class="who"><div class="yes"><b>Free:</b> ' + (free.length ? esc(free.map(x => x.name).join(', ')) : 'nobody') + '</div>' +
+        (no.length ? '<div class="no"><b>Not free:</b> ' + esc(no.map(x => x.name).join(', ')) + '</div>' : '') +
+        (p.isAdmin && i + L <= n ? '<button type="button" class="btn small" id="startHere" style="margin-top:10px">Start the meeting at ' + clock(m) + '</button>' : '') + '</div>';
+    }
+  }
+  h += '</div></div>' + adminCard();
+  pane.innerHTML = h;
+
+  bindDayTabs(renderGroup);
+  pane.querySelector('.heat').onclick = e => { const b = e.target.closest('button'); if (!b) return;
+    S.day = Number(b.dataset.d); S.sel = Number(b.dataset.i); renderGroup();
+    const r = $('grows').querySelector('.sel'); if (r) r.scrollIntoView({ block:'center' }); };
+  $('grows').onclick = e => { const b = e.target.closest('.row'); if (!b) return;
+    const i = Number(b.dataset.i); S.sel = S.sel === i ? null : i; renderGroup();
+    const r = $('grows').querySelector('.sel'); if (r) r.scrollIntoView({ block:'nearest' }); };
+  const sh = $('startHere'); if (sh) sh.onclick = () => adminDo('final', { d:S.day, s:S.sel, e:S.sel + L });
+  pane.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => {
+    const x = best[Number(b.dataset.pick)]; adminDo('final', { d:x.d, s:x.s, e:x.s + L }); });
+  bindAdmin();
+}
+function lengthWords(m) { return m % 60 ? m + '-minute' : (m / 60) + '-hour'; }
+// Half hours someone must be free for a meeting this long (a 15- or 45-minute meeting rounds up).
+function slotsNeeded() { return Math.max(1, Math.min(N(), Math.ceil(S.p.length / STEP))); }
+
+// ---------- Your polls (kept in this browser) ----------
+function rememberPoll(r, title) {
+  const list = (store.get('mwk-polls') || []).filter(x => x.id !== r.id);
+  list.unshift({ id:r.id, admin:r.admin, title:title, at:Date.now() });
+  store.set('mwk-polls', list.slice(0, 30));
+}
+function myPollsCard() {
+  const list = store.get('mwk-polls') || [];
+  if (!list.length) return '';
+  return '<div class="card people" style="margin-top:16px"><h2>Your polls</h2><ul id="myPolls">' + list.map((x, k) =>
+    '<li><span>' + esc(x.title) + ' <span class="hint">' + new Date(x.at).toLocaleDateString('en-US', { month:'short', day:'numeric' }) + '</span></span>' +
+    '<span style="display:flex;gap:6px;flex:none"><button type="button" class="btn small ghost" data-copy="' + k + '">Copy link</button>' +
+    '<button type="button" class="btn small" data-open="' + k + '">Open</button></span></li>').join('') + '</ul>' +
+    '<div class="hint" style="margin-top:6px">Saved in this browser only. Open takes you to the organizer view.</div></div>';
+}
+function bindMyPolls() {
+  const box = $('myPolls'); if (!box) return;
+  const list = store.get('mwk-polls') || [];
+  box.onclick = e => {
+    const c = e.target.closest('[data-copy]'), o = e.target.closest('[data-open]');
+    if (c) copyText(c, APP_URL + '#' + list[Number(c.dataset.copy)].id);
+    if (o) { const x = list[Number(o.dataset.open)];
+      setHash(x.id + '-' + x.admin); openPoll(x.id, x.admin); }
+  };
+}
+
+// ---------- Organizer tools ----------
+function adminCard() {
+  const p = S.p; if (!p.isAdmin) return '';
+  const share = APP_URL + '#' + p.id;
+  return '<div class="card"><h2>Organizer tools</h2>' +
+    '<div class="link" style="margin-bottom:12px"><code>' + esc(share) + '</code><button class="btn small" type="button" id="aCopy">Copy link</button></div>' +
+    '<button type="button" class="btn small ghost" id="aClose">' + (p.status === 'closed' ? 'Reopen the poll' : 'Close the poll') + '</button>' +
+    (p.people.length ? '<div class="people" style="margin-top:12px"><div class="hint" style="margin-bottom:4px">' + p.people.length + ' of ' + p.max + ' people</div><ul>' +
+      p.people.map(x => '<li><span>' + esc(x.name) + ' <span class="hint">' + esc(x.email) + '</span></span>' +
+        '<button type="button" class="btn small ghost" data-rm="' + esc(x.email) + '">Remove</button></li>').join('') + '</ul></div>' : '') +
+    '<div class="err" id="aErr" role="alert"></div></div>';
+}
+function bindAdmin() {
+  if (!S.p.isAdmin) return;
+  $('aCopy').onclick = e => copyText(e.target, APP_URL + '#' + S.p.id);
+  $('aClose').onclick = () => adminDo(S.p.status === 'closed' ? 'reopen' : 'close');
+  $('pane').querySelectorAll('[data-rm]').forEach(b => b.onclick = () => {
+    if (confirm('Remove ' + b.closest('li').querySelector('span').firstChild.textContent.trim() + '\'s answers?')) adminDo('remove', b.dataset.rm); });
+}
+function adminDo(action, value) {
+  call('adminUpdate', [S.id, S.admin, action, value, S.me && S.me.email], p => {
+    loadPoll(p); renderPoll(); if (action === 'final') window.scrollTo(0, 0);
+  }, msg => { const e = $('aErr'); if (e) e.textContent = msg; else alert(msg); });
+}
+
+// ===================== Start =====================
+function route() {
+  const h = decodeURIComponent(String(location.hash || '').replace(/^#/, '')).trim();
+  const m = h.match(/^([A-Za-z]{8})(?:-([A-Za-z]{16}))?$/);
+  S.dirty = false; S.tab = 'mine'; S.day = 0; S.sel = null;
+  if (m) openPoll(m[1], m[2]); else renderCreate();
+}
+window.addEventListener('hashchange', route);
+route();
+</script>
+</body>
+</html>
