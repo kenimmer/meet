@@ -5,6 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Meet with Ken</title>
 <meta name="apple-mobile-web-app-title" content="Meet with Ken">
+<base target="_top">
+<!-- Only people with the link should find this page -->
+<meta name="robots" content="noindex">
+<!-- Tab icon, iPhone home-screen icon, and the card that shows when the link is texted or posted -->
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="description" content="Tap the times you're free. We'll find the one that works.">
+<meta property="og:title" content="Meet with Ken">
+<meta property="og:description" content="Tap the times you're free. We'll find the one that works.">
+<meta property="og:image" content="https://kenimmer.github.io/meet/preview.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://kenimmer.github.io/meet/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@500;600&display=swap" rel="stylesheet">
 <style>
@@ -32,17 +47,19 @@
          background:var(--c); color:var(--cfg); cursor:pointer; }
   .btn.wide { width:100%; }
   .btn.ghost { background:#fff; color:var(--ink); border:1px solid #c9ced6; font-weight:500; }
-  .btn.small { padding:8px 12px; font-size:14px; border-radius:10px; }
+  .btn.small { padding:8px 12px; font-size:14px; border-radius:10px; min-height:44px; }
+  .btn.confirm { background:#b3261e; color:#fff; border-color:#b3261e; }
+  .tap { display:inline-block; padding:10px 2px; }   /* small text links get a thumb-sized tap area */
   .btn:disabled { opacity:.5; }
   .seg { display:flex; background:var(--soft); border-radius:12px; padding:3px; gap:3px; }
-  .seg button { flex:1; border:0; background:none; padding:9px 6px; border-radius:10px; font-size:15px; cursor:pointer; }
+  .seg button { flex:1; border:0; background:none; padding:9px 6px; border-radius:10px; font-size:15px; cursor:pointer; min-height:44px; }
   .seg button[aria-pressed=true] { background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.12); font-weight:600; }
   .chips { display:flex; gap:6px; flex-wrap:wrap; }
-  .chip { border:2px solid transparent; border-radius:999px; padding:6px 12px; font-size:14px; cursor:pointer; }
+  .chip { border:2px solid transparent; border-radius:999px; padding:6px 14px; font-size:14px; cursor:pointer; min-height:44px; }
   .chip[aria-pressed=true] { border-color:var(--ink); box-shadow:0 0 0 2px #fff inset; }
   /* month calendar */
   .cal-head { display:flex; justify-content:space-between; align-items:center; margin:8px 0 6px; font-weight:600; }
-  .cal-head button { border:1px solid var(--line); background:#fff; border-radius:10px; width:40px; height:36px; font-size:18px; cursor:pointer; }
+  .cal-head button { border:1px solid var(--line); background:#fff; border-radius:10px; width:44px; height:44px; font-size:18px; cursor:pointer; }
   .cal { display:grid; grid-template-columns:repeat(7, 1fr); gap:4px; text-align:center; }
   .cal .dow { font-size:12px; color:var(--quiet); padding:4px 0; }
   .cal button { aspect-ratio:1; border:1px solid var(--line); background:#fff; border-radius:10px; font-size:15px; cursor:pointer; padding:0; }
@@ -69,6 +86,9 @@
   .row .t { width:72px; flex:none; font-size:14px; color:var(--quiet); font-variant-numeric:tabular-nums; }
   .row .v { flex:1; font-size:14px; }
   .row.on { background:var(--heat); color:#fff; }
+  /* Half hours Ken's Outlook calendar shows as busy: striped grey and locked */
+  .row.busy { background:repeating-linear-gradient(135deg, #eef0f3 0 8px, #e3e6ea 8px 16px); color:var(--quiet); cursor:default; }
+  .note { background:#eef6f5; border-color:#cfe5e2; font-size:14px; }
   .row.on .t { color:rgba(255,255,255,.85); }
   .row .bar { flex:1; height:26px; border-radius:7px; background:var(--soft); position:relative; overflow:hidden; }
   .row .bar i { position:absolute; inset:0 auto 0 0; background:var(--heat); border-radius:7px; }
@@ -118,7 +138,7 @@
 
 <script>
 // ▼▼▼ Paste your Apps Script web app address here (Deploy → Manage deployments → the URL ending in /exec)
-const API_URL = 'https://script.google.com/macros/s/AKfycbyPl1GOfksqD_HzN1LyYJFUAOHygR0mFkKHokIfDHCfV7dEADN3gGcagUmHT5I6ky6u5Q/exec';
+const API_URL = 'PASTE_YOUR_EXEC_URL_HERE';
 // ▲▲▲
 const APP_URL = location.origin + location.pathname;   // this page's own address, used in share links
 const STEP = 30, MAX_DAYS = 15;
@@ -177,8 +197,10 @@ function copyText(btn, text) {
   else fallback();
 }
 function call(fn, args, ok, bad) {
-  // Plain-text POST with no cookies: no Google sign-in is ever involved.
-  fetch(API_URL, { method:'POST', body: JSON.stringify({ fn:fn, args:args }) })
+  // Asks the script for data with a plain "get" request (the front door). No cookies are
+  // sent, so no Google sign-in is ever involved. Every failure becomes an on-page message.
+  const url = API_URL + '?fn=' + encodeURIComponent(fn) + '&args=' + encodeURIComponent(JSON.stringify(args));
+  fetch(url, { cache:'no-store' })
     .then(r => r.json())
     .then(res => res, () => null)
     .then(res => {
@@ -326,6 +348,21 @@ function loadPoll(p) {
   S.p = p; setType(p.type);
   const mineRow = p.people.filter(x => x.me)[0];
   if (!S.dirty) S.mine = mineRow ? mineRow.slots.split('').map(Number) : new Array(p.days.length * N()).fill(0);
+  // Organizer only: Ken's Outlook busy times (the script never sends them to invitees).
+  S.busy = p.busy ? p.busy.split('').map(Number) : null;
+  S.calNote = '';
+  if (S.busy && p.status !== 'closed') {
+    if (!mineRow && !S.dirty) {
+      // First time answering: start with every free half hour marked, busy ones left off.
+      S.mine = S.busy.map(b => b ? 0 : 1); S.dirty = true;
+      S.calNote = 'Your Outlook calendar is filled in: free times are marked, busy times are locked. Untick anything you don\'t want to offer, then Save.';
+    } else {
+      // Already answered: clear any times that have since become busy in Outlook.
+      let cleared = 0;
+      S.busy.forEach((b, i) => { if (b && S.mine[i]) { S.mine[i] = 0; cleared++; } });
+      if (cleared) { S.dirty = true; S.calNote = cleared + ' half hour' + (cleared > 1 ? 's' : '') + ' you\'d offered are now busy in Outlook and were cleared. Save to update.'; }
+    }
+  }
   if (S.day >= p.days.length) S.day = 0;
   $('title').textContent = p.title;
   $('sub').textContent = 'With ' + p.organizer + ' · times are ' + p.tz;
@@ -352,7 +389,7 @@ function finalCard() {
   return '<div class="card final"><div class="hint" style="color:#d6dae0">Meeting time chosen</div>' +
     '<div style="font-size:20px;font-weight:600;margin:4px 0 8px">' + dayLong(d) + ', ' + span(a, b) + ' ' + esc(S.p.tz) + '</div>' +
     '<a href="' + esc(calLink(d, a, b)) + '" target="_blank" rel="noopener">Add to Google Calendar</a>' +
-    (S.p.isAdmin ? ' &nbsp;·&nbsp; <a href="#" id="unfinal">Undo</a>' : '') + '</div>';
+    (S.p.isAdmin ? ' &nbsp;·&nbsp; <a href="#" class="tap" id="unfinal">Undo</a>' : '') + '</div>';
 }
 function bindFinal() {
   const u = $('unfinal'); if (u) u.onclick = e => { e.preventDefault(); adminDo('final', null); };
@@ -384,12 +421,14 @@ function renderMine() {
   const base = S.day * n;
   let rows = '';
   for (let i = 0; i < n; i++) {
-    const m = p.start + i * STEP, on = S.mine[base + i] === 1;
-    rows += '<button type="button" class="row' + (on ? ' on' : '') + (m % 60 === 0 ? ' hour' : '') + '" data-i="' + i + '"' + (locked ? ' disabled' : '') + '>' +
-      '<span class="t">' + clock(m) + '</span><span class="v">' + (on ? 'Free' : '') + '</span></button>';
+    const m = p.start + i * STEP, on = S.mine[base + i] === 1, busy = isBusy(base + i);
+    rows += '<button type="button" class="row' + (on ? ' on' : '') + (busy ? ' busy' : '') + (m % 60 === 0 ? ' hour' : '') + '" data-i="' + i + '"' + (locked || busy ? ' disabled' : '') + '>' +
+      '<span class="t">' + clock(m) + '</span><span class="v">' + (busy ? 'Busy in Outlook' : on ? 'Free' : '') + '</span></button>';
   }
   pane.innerHTML =
-    '<div class="hint" style="margin-bottom:8px">Answering as <b>' + esc(S.me.name) + '</b> · <a href="#" id="notMe">not you?</a></div>' +
+    (p.busyError ? '<div class="card err" role="alert">' + esc(p.busyError) + '</div>' : '') +
+    (S.calNote ? '<div class="card note">' + esc(S.calNote) + '</div>' : '') +
+    '<div class="hint" style="margin-bottom:8px">Answering as <b>' + esc(S.me.name) + '</b> · <a href="#" class="tap" id="notMe">not you?</a></div>' +
     dayTabs(i => S.mine.slice(i * n, i * n + n).indexOf(1) !== -1 ? '<span class="pip"></span>' : '') +
     (locked ? '' : '<div class="tools"><button type="button" class="btn small ghost" data-a="all">Free all day</button>' +
       '<button type="button" class="btn small ghost" data-a="clear">Clear day</button>' +
@@ -402,17 +441,20 @@ function renderMine() {
   pane.querySelector('.tools').onclick = e => {
     const b = e.target.closest('button'); if (!b) return;
     const a = b.dataset.a, day = S.mine.slice(base, base + n);
-    if (a === 'all' || a === 'clear') for (let i = 0; i < n; i++) S.mine[base + i] = a === 'all' ? 1 : 0;
-    if (a === 'copy') for (let d = 0; d < p.days.length; d++) for (let i = 0; i < n; i++) S.mine[d * n + i] = day[i];
+    // Busy half hours always stay off.
+    if (a === 'all' || a === 'clear') for (let i = 0; i < n; i++) S.mine[base + i] = a === 'all' && !isBusy(base + i) ? 1 : 0;
+    if (a === 'copy') for (let d = 0; d < p.days.length; d++) for (let i = 0; i < n; i++) S.mine[d * n + i] = day[i] && !isBusy(d * n + i) ? 1 : 0;
     S.dirty = true; renderMine(); updateFoot();
   };
   bindPaint($('rows'), base);
 }
 
+function isBusy(k) { return !!(S.busy && S.busy[k]); }
+
 // Tap toggles a half hour. With a mouse you can also click and drag to paint a stretch.
 function bindPaint(box, base) {
   let painting = false, val = 1, mouse = false;
-  const set = btn => { const i = Number(btn.dataset.i); if (S.mine[base + i] === val) return;
+  const set = btn => { const i = Number(btn.dataset.i); if (S.mine[base + i] === val || isBusy(base + i)) return;
     S.mine[base + i] = val; btn.classList.toggle('on', val === 1); btn.querySelector('.v').textContent = val ? 'Free' : '';
     S.dirty = true; updateFoot(); };
   box.addEventListener('pointerdown', e => {
@@ -564,10 +606,11 @@ function myPollsCard() {
   const list = store.get('mwk-polls') || [];
   if (!list.length) return '';
   return '<div class="card people" style="margin-top:16px"><h2>Your polls</h2><ul id="myPolls">' + list.map((x, k) =>
-    '<li><span>' + esc(x.title) + ' <span class="hint">' + new Date(x.at).toLocaleDateString('en-US', { month:'short', day:'numeric' }) + '</span></span>' +
-    '<span style="display:flex;gap:6px;flex:none"><button type="button" class="btn small ghost" data-copy="' + k + '">Copy link</button>' +
-    '<button type="button" class="btn small" data-open="' + k + '">Open</button></span></li>').join('') + '</ul>' +
-    '<div class="hint" style="margin-top:6px">Saved in this browser only. Open takes you to the organizer view.</div></div>';
+    '<li style="display:block"><div>' + esc(x.title) + ' <span class="hint">' + new Date(x.at).toLocaleDateString('en-US', { month:'short', day:'numeric' }) + '</span></div>' +
+    '<div class="link" style="margin-top:6px"><code>' + esc(APP_URL + '#' + x.id) + '</code>' +
+    '<button type="button" class="btn small ghost" data-copy="' + k + '">Copy</button>' +
+    '<button type="button" class="btn small" data-open="' + k + '">Open</button></div></li>').join('') + '</ul>' +
+    '<div class="hint" style="margin-top:6px">Saved in this browser only. The link is the one to share; Open takes you to the organizer view.</div></div>';
 }
 function bindMyPolls() {
   const box = $('myPolls'); if (!box) return;
@@ -596,13 +639,23 @@ function bindAdmin() {
   if (!S.p.isAdmin) return;
   $('aCopy').onclick = e => copyText(e.target, APP_URL + '#' + S.p.id);
   $('aClose').onclick = () => adminDo(S.p.status === 'closed' ? 'reopen' : 'close');
+  // Remove takes two taps: the first turns the button red and asks again, so nothing goes by accident.
   $('pane').querySelectorAll('[data-rm]').forEach(b => b.onclick = () => {
-    if (confirm('Remove ' + b.closest('li').querySelector('span').firstChild.textContent.trim() + '\'s answers?')) adminDo('remove', b.dataset.rm); });
+    if (b.classList.contains('confirm')) { b.disabled = true; b.textContent = 'Removing…'; adminDo('remove', b.dataset.rm); return; }
+    b.classList.add('confirm'); b.textContent = 'Tap again to remove';
+    setTimeout(() => { if (!b.disabled) { b.classList.remove('confirm'); b.textContent = 'Remove'; } }, 4000);
+  });
 }
 function adminDo(action, value) {
   call('adminUpdate', [S.id, S.admin, action, value, S.me && S.me.email], p => {
     loadPoll(p); renderPoll(); if (action === 'final') window.scrollTo(0, 0);
-  }, msg => { const e = $('aErr'); if (e) e.textContent = msg; else alert(msg); });
+  }, msg => { const e = $('aErr'); if (e) e.textContent = msg; else showMsg(msg); });
+}
+// Shows an error at the top of the page (instead of a pop-up box).
+function showMsg(msg) {
+  let box = $('pageMsg');
+  if (!box) { $('app').insertAdjacentHTML('afterbegin', '<div class="card err" id="pageMsg" role="alert"></div>'); box = $('pageMsg'); }
+  box.textContent = msg; window.scrollTo(0, 0);
 }
 
 // ===================== Start =====================
