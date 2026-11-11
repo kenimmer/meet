@@ -317,9 +317,9 @@ function showCreated(r, title) {
   const share = APP_URL + '#' + r.id, admin = share + '-' + r.admin;
   $('title').textContent = title; $('sub').textContent = 'Your poll is ready.';
   $('app').innerHTML =
-    '<div class="card"><h2>Share this link</h2><div class="hint" style="margin-bottom:8px">Send it to everyone you\'re inviting, from any email, text or WhatsApp.</div>' +
+    '<div class="card"><h2>✉️ Guest link: send this one</h2><div class="hint" style="margin-bottom:8px">Send it to everyone you\'re inviting, by email, text or WhatsApp.</div>' +
       '<div class="link"><code>' + esc(share) + '</code><button class="btn small" type="button" id="cp1">Copy</button></div></div>' +
-    '<div class="card"><h2>Your organizer link</h2><div class="hint" style="margin-bottom:8px">Keep this one to yourself. It lets you choose the final time and close the poll. It\'s also listed under "Your polls" on the start page.</div>' +
+    '<div class="card"><h2>🔒 Your private link: don\'t send</h2><div class="hint" style="margin-bottom:8px">Just for you. It shows everyone\'s emails and your Outlook times, and lets you pick the final time. You don\'t need to save it: it\'s under "Your polls" on the start page (tap Manage).</div>' +
       '<div class="link"><code>' + esc(admin) + '</code><button class="btn small ghost" type="button" id="cp2">Copy</button></div></div>' +
     '<button class="btn wide" type="button" id="goPoll">Mark my own times</button>';
   $('cp1').onclick = e => copyText(e.target, share);
@@ -332,6 +332,7 @@ const S = { id:'', admin:'', p:null, me:null, mine:null, dirty:false, tab:'mine'
 const N = () => (S.p.end - S.p.start) / STEP;
 
 function openPoll(id, admin) {
+  S.justSaved = false;
   S.id = id; S.admin = admin || '';
   S.me = store.get('mf-me');
   $('app').innerHTML = '<div class="center">Opening the poll…</div>';
@@ -346,6 +347,7 @@ function openPoll(id, admin) {
 function loadPoll(p) {
   S.p = p; setType(p.type);
   const mineRow = p.people.filter(x => x.me)[0];
+  S.saved = !!mineRow;
   if (!S.dirty) S.mine = mineRow ? mineRow.slots.split('').map(Number) : new Array(p.days.length * N()).fill(0);
   // Organizer only: Ken's Outlook busy times (the script never sends them to invitees).
   S.busy = p.busy ? p.busy.split('').map(Number) : null;
@@ -370,6 +372,10 @@ function loadPoll(p) {
 function renderPoll() {
   const p = S.p;
   let h = '';
+  // Organizer view: say so plainly, and hand over the guest link right here.
+  if (p.isAdmin) h += '<div class="card note"><b>🔒 Your private organizer view.</b> Don\'t send this page\'s address. To invite people, send the guest link:' +
+    '<div class="link" style="margin-top:8px"><code>' + esc(APP_URL + '#' + p.id) + '</code><button class="btn small" type="button" id="aCopy">Copy</button></div></div>';
+  if (S.justSaved) h += '<div class="card note" role="status"><b>✓ Your times are saved.</b> You\'re all set and can close this page. To change them later, open the same link again.</div>';
   if (p.final) h += finalCard();
   if (p.note) h += '<div class="card" style="white-space:pre-wrap">' + esc(p.note) + '</div>';
   if (p.status === 'closed' && !p.final) h += '<div class="card"><b>This poll is closed.</b> <span class="hint">Answers can no longer change.</span></div>';
@@ -377,7 +383,8 @@ function renderPoll() {
        '<button type="button" data-t="group" aria-pressed="' + (S.tab === 'group') + '">Group (' + p.people.length + ')</button></div></div>';
   h += '<div id="pane"></div>';
   $('app').innerHTML = h;
-  $('tabs').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.tab = b.dataset.t; S.sel = null; renderPoll(); };
+  $('tabs').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.tab = b.dataset.t; S.sel = null; S.justSaved = false; renderPoll(); };
+  if (p.isAdmin) $('aCopy').onclick = e => copyText(e.target, APP_URL + '#' + p.id);
   if (S.tab === 'mine') renderMine(); else renderGroup();
   updateFoot();
   if (p.final) bindFinal();
@@ -427,14 +434,18 @@ function renderMine() {
   pane.innerHTML =
     (p.busyError ? '<div class="card err" role="alert">' + esc(p.busyError) + '</div>' : '') +
     (S.calNote ? '<div class="card note">' + esc(S.calNote) + '</div>' : '') +
+    (locked ? '' : '<div class="card" style="padding:10px 14px"><b>1.</b> Tap every half hour you\'re free. Use the date tabs to switch days.<br><b>2.</b> Tap <b>Save my times</b> at the bottom.</div>') +
     '<div class="hint" style="margin-bottom:8px">Answering as <b>' + esc(S.me.name) + '</b> · <a href="#" class="tap" id="notMe">not you?</a></div>' +
     dayTabs(i => S.mine.slice(i * n, i * n + n).indexOf(1) !== -1 ? '<span class="pip"></span>' : '') +
     (locked ? '' : '<div class="tools"><button type="button" class="btn small ghost" data-a="all">Free all day</button>' +
       '<button type="button" class="btn small ghost" data-a="clear">Clear day</button>' +
       (p.days.length > 1 ? '<button type="button" class="btn small ghost" data-a="copy">Copy to every day</button>' : '') + '</div>') +
     '<div class="hint" style="margin-bottom:6px">Tap each half hour you\'re free on ' + dayLong(p.days[S.day]) + '.</div>' +
-    '<div class="rows" id="rows">' + rows + '</div>';
+    '<div class="rows" id="rows">' + rows + '</div>' +
+    (locked ? '' : '<button class="btn wide" type="button" id="saveBottom" style="margin-top:12px"></button>' +
+      '<div class="hint" id="saveHint" style="margin-top:6px;text-align:center"></div>');
   bindDayTabs(renderMine);
+  if (!locked) { $('saveBottom').onclick = saveTimes; updateFoot(); }
   $('notMe').onclick = e => { e.preventDefault(); S.me = null; S.dirty = false; S.mine = null; store.set('mf-me', null); openPoll(S.id, S.admin); };
   if (locked) return;
   pane.querySelector('.tools').onclick = e => {
@@ -490,19 +501,29 @@ function renderWho() {
   };
 }
 
+// Keeps both Save buttons (the one under the times, and the bar stuck to the bottom) up to date.
 function updateFoot() {
   const show = S.tab === 'mine' && S.me && S.p && S.p.status !== 'closed' && (S.dirty || S.saving);
   $('foot').style.display = show ? 'block' : 'none';
   $('footMsg').textContent = S.saving ? 'Saving…' : 'You have changes that aren\'t saved yet.';
   $('saveBtn').disabled = S.saving;
+  const b = $('saveBottom'), hint = $('saveHint');
+  if (b) {
+    const done = S.saved && !S.dirty && !S.saving;
+    b.textContent = S.saving ? 'Saving…' : done ? '✓ Saved' : 'Save my times';
+    b.disabled = S.saving || done;
+    hint.className = 'hint'; hint.textContent = done ? 'Your times are saved. Change anything above to update them.' : '';
+  }
 }
-$('saveBtn').onclick = () => {
+function saveTimes() {
   S.saving = true; updateFoot();
   call('saveResponse', [S.id, S.me.name, S.me.email, S.mine.join(''), S.admin], p => {
-    S.saving = false; S.dirty = false; loadPoll(p); S.tab = 'group'; renderPoll();
+    S.saving = false; S.dirty = false; loadPoll(p); S.tab = 'group'; S.justSaved = true; renderPoll();
     window.scrollTo(0, 0);
-  }, msg => { S.saving = false; updateFoot(); $('footMsg').textContent = msg; });
-};
+  }, msg => { S.saving = false; updateFoot(); $('footMsg').textContent = msg;
+    const h = $('saveHint'); if (h) { h.textContent = msg; h.className = 'err'; } });
+}
+$('saveBtn').onclick = saveTimes;
 
 // ---------- Group ----------
 function freeAt(d, i) { const n = N(); return S.p.people.filter(x => x.slots.charAt(d * n + i) === '1'); }
@@ -633,15 +654,16 @@ function renderMyPolls(body) {
     return '<li style="display:block">' +
       '<div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + c + ';margin-right:6px"></span><b>' + esc(x.title) + '</b></div>' +
       '<div class="hint" style="margin-top:2px">' + esc(x.type) + ' · ' + when + ' · ' + x.answers + ' answered · ' + state + '</div>' +
-      '<div class="link" style="margin-top:6px"><code>' + esc(APP_URL + '#' + x.id) + '</code>' +
+      '<div class="hint" style="margin-top:6px">Guest link:</div>' +
+      '<div class="link"><code>' + esc(APP_URL + '#' + x.id) + '</code>' +
       '<button type="button" class="btn small ghost" data-copy="' + k + '">Copy</button>' +
-      '<button type="button" class="btn small" data-open="' + k + '">Open</button></div></li>';
+      '<button type="button" class="btn small" data-open="' + k + '">Manage</button></div></li>';
   };
   body.innerHTML =
     '<div class="people"><ul>' + (live.length ? live.map(item).join('') : '<li><span class="hint">No polls running right now.</span></li>') + '</ul></div>' +
     (done.length ? '<details style="margin-top:10px"><summary style="padding:12px 0;cursor:pointer;font-weight:600">Finished and past polls (' + done.length + ')</summary>' +
       '<div class="people"><ul>' + done.map(item).join('') + '</ul></div></details>' : '') +
-    '<div class="hint" style="margin-top:8px">The link is the one to share. Open takes you to your organizer view.</div>';
+    '<div class="hint" style="margin-top:8px">Send the guest link. Manage opens your private organizer view.</div>';
   body.onclick = e => {
     const cp = e.target.closest('[data-copy]'), op = e.target.closest('[data-open]');
     if (cp) copyText(cp, APP_URL + '#' + MP[Number(cp.dataset.copy)].id);
@@ -654,7 +676,6 @@ function adminCard() {
   const p = S.p; if (!p.isAdmin) return '';
   const share = APP_URL + '#' + p.id;
   return '<div class="card"><h2>Organizer tools</h2>' +
-    '<div class="link" style="margin-bottom:12px"><code>' + esc(share) + '</code><button class="btn small" type="button" id="aCopy">Copy link</button></div>' +
     '<button type="button" class="btn small ghost" id="aClose">' + (p.status === 'closed' ? 'Reopen the poll' : 'Close the poll') + '</button>' +
     (p.people.length ? '<div class="people" style="margin-top:12px"><div class="hint" style="margin-bottom:4px">' + p.people.length + ' of ' + p.max + ' people</div><ul>' +
       p.people.map(x => '<li><span>' + esc(x.name) + ' <span class="hint">' + esc(x.email) + '</span></span>' +
@@ -663,7 +684,6 @@ function adminCard() {
 }
 function bindAdmin() {
   if (!S.p.isAdmin) return;
-  $('aCopy').onclick = e => copyText(e.target, APP_URL + '#' + S.p.id);
   $('aClose').onclick = () => adminDo(S.p.status === 'closed' ? 'reopen' : 'close');
   // Remove takes two taps: the first turns the button red and asks again, so nothing goes by accident.
   $('pane').querySelectorAll('[data-rm]').forEach(b => b.onclick = () => {
