@@ -50,7 +50,13 @@
   .btn.small { padding:8px 12px; font-size:14px; border-radius:10px; min-height:44px; }
   .btn.confirm { background:#b3261e; color:#fff; border-color:#b3261e; }
   .tap { display:inline-block; padding:10px 2px; }   /* small text links get a thumb-sized tap area */
-  .btn:disabled { opacity:.5; }
+  .btn:disabled { opacity:.55; }
+  /* Instant feedback: buttons dip when pressed, and show a spinner while waiting on the server */
+  .btn:active:not(:disabled) { transform:scale(.97); filter:brightness(.9); }
+  .working { opacity:1 !important; pointer-events:none; }
+  .working::before { content:''; display:inline-block; width:14px; height:14px; margin-right:8px; vertical-align:-2px;
+    border:2px solid currentColor; border-right-color:transparent; border-radius:50%; animation:spin .7s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
   .seg { display:flex; background:var(--soft); border-radius:12px; padding:3px; gap:3px; }
   .seg button { flex:1; border:0; background:none; padding:9px 6px; border-radius:10px; font-size:15px; cursor:pointer; min-height:44px; }
   .seg button[aria-pressed=true] { background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.12); font-weight:600; }
@@ -180,7 +186,8 @@ function clock(m, withAmPm) {
   return h12 + ':' + String(mm).padStart(2, '0') + (withAmPm === false ? '' : (h < 12 ? ' am' : ' pm'));
 }
 function span(a, b) { // "6:00 – 8:30 pm", or both am/pm when they differ
-  const sameHalf = (Math.floor(a / 720) === Math.floor((b - 1) / 720)) && b % 1440 !== 0;
+  // Drop the first am/pm only when both ends share it (11:00 – 12:00 pm would read wrong).
+  const sameHalf = Math.floor((a % 1440) / 720) === Math.floor((b % 1440) / 720) && b % 1440 !== 0;
   return clock(a, !sameHalf) + ' – ' + (b === 1440 ? '12:00 am' : clock(b));
 }
 function copyText(btn, text) {
@@ -305,12 +312,12 @@ function submitCreate() {
     tz:$('cTz').value, ownerCode:$('cCode').value.trim() };
   if (f.end <= f.start) { $('cErr').textContent = 'The latest time needs to be after the earliest time.'; return; }
   if (!f.days.length) { $('cErr').textContent = 'Please pick at least one day.'; return; }
-  $('cGo').disabled = true; $('cGo').textContent = 'Creating…'; $('cErr').textContent = '';
+  $('cGo').disabled = true; $('cGo').classList.add('working'); $('cGo').textContent = 'Creating…'; $('cErr').textContent = '';
   store.set('mwk-owner', f.ownerCode);
   call('createPoll', [f], r => {
     setHash(r.id + '-' + r.admin);
     showCreated(r, f.title);
-  }, msg => { $('cGo').disabled = false; $('cGo').textContent = 'Create poll'; $('cErr').textContent = msg; });
+  }, msg => { $('cGo').disabled = false; $('cGo').classList.remove('working'); $('cGo').textContent = 'Create poll'; $('cErr').textContent = msg; });
 }
 
 function showCreated(r, title) {
@@ -398,7 +405,7 @@ function finalCard() {
     (S.p.isAdmin ? ' &nbsp;·&nbsp; <a href="#" class="tap" id="unfinal">Undo</a>' : '') + '</div>';
 }
 function bindFinal() {
-  const u = $('unfinal'); if (u) u.onclick = e => { e.preventDefault(); adminDo('final', null); };
+  const u = $('unfinal'); if (u) u.onclick = e => { e.preventDefault(); adminDo('final', null, u, 'Undoing…'); };
 }
 function calLink(day, a, b) {
   const stamp = m => day.replace(/-/g, '') + 'T' + String(Math.floor(m / 60)).padStart(2, '0') + String(m % 60).padStart(2, '0') + '00';
@@ -506,12 +513,12 @@ function updateFoot() {
   const show = S.tab === 'mine' && S.me && S.p && S.p.status !== 'closed' && (S.dirty || S.saving);
   $('foot').style.display = show ? 'block' : 'none';
   $('footMsg').textContent = S.saving ? 'Saving…' : 'You have changes that aren\'t saved yet.';
-  $('saveBtn').disabled = S.saving;
+  $('saveBtn').disabled = S.saving; $('saveBtn').classList.toggle('working', !!S.saving);
   const b = $('saveBottom'), hint = $('saveHint');
   if (b) {
     const done = S.saved && !S.dirty && !S.saving;
     b.textContent = S.saving ? 'Saving…' : done ? '✓ Saved' : 'Save my times';
-    b.disabled = S.saving || done;
+    b.disabled = S.saving || done; b.classList.toggle('working', !!S.saving);
     hint.className = 'hint'; hint.textContent = done ? 'Your times are saved. Change anything above to update them.' : '';
   }
 }
@@ -528,6 +535,13 @@ $('saveBtn').onclick = saveTimes;
 // ---------- Group ----------
 function freeAt(d, i) { const n = N(); return S.p.people.filter(x => x.slots.charAt(d * n + i) === '1'); }
 
+// Organizer only: the start times that fit the meeting inside one "best" stretch.
+function startPicker(b, k, L) {
+  if (!S.p.isAdmin || S.pickStretch !== k || b.e - b.s <= L) return '';
+  let h = '<div style="flex-basis:100%;margin-top:8px"><div class="hint" style="margin-bottom:6px">Start the meeting at:</div><div class="tools">';
+  for (let s = b.s; s + L <= b.e; s++) h += '<button type="button" class="btn small ghost" data-start="' + s + '">' + clock(S.p.start + s * STEP) + '</button>';
+  return h + '<button type="button" class="btn small ghost" id="pickCancel">Cancel</button></div></div>';
+}
 function bestTimes() {
   const p = S.p, n = N(), L = slotsNeeded(), out = [];
   for (let d = 0; d < p.days.length; d++) {
@@ -561,10 +575,11 @@ function renderGroup() {
   if (!best.length) h += '<div class="hint">No ' + lengthWords(p.length) + ' stretch works for anyone yet.</div>';
   else h += '<ul>' + best.map((b, k) => {
     const missing = p.people.filter((x, i) => b.who.indexOf(i) === -1).map(x => x.name);
-    return '<li><div class="grow"><div class="when">' + dayLong(p.days[b.d]) + ', ' + span(p.start + b.s * STEP, p.start + b.e * STEP) + '</div>' +
+    return '<li style="flex-wrap:wrap"><div class="grow"><div class="when">' + dayLong(p.days[b.d]) + ', ' + span(p.start + b.s * STEP, p.start + b.e * STEP) + '</div>' +
       '<div class="meta">' + (b.who.length === total ? '<span class="pill">Everyone</span>' : b.who.length + ' of ' + total + ' free · missing ' + esc(missing.join(', '))) + '</div></div>' +
-      (p.isAdmin ? '<button type="button" class="btn small" data-pick="' + k + '">Choose</button>' : '') + '</li>';
-  }).join('') + '</ul>' + (p.isAdmin ? '<div class="hint" style="margin-top:6px">Choose sets the meeting at the start of that stretch. For a later start, tap a time in the day view below.</div>' : '');
+      (p.isAdmin ? '<button type="button" class="btn small" data-pick="' + k + '">' + (b.e - b.s > L ? 'Choose a start' : 'Choose') + '</button>' : '') +
+      startPicker(b, k, L) + '</li>';
+  }).join('') + '</ul>' + (p.isAdmin ? '<div class="hint" style="margin-top:6px">Tap a stretch to pick the exact start time, or tap any time in the day view below.</div>' : '');
   h += '</div>';
 
   // Overview heatmap: every day at a glance
@@ -607,9 +622,16 @@ function renderGroup() {
   $('grows').onclick = e => { const b = e.target.closest('.row'); if (!b) return;
     const i = Number(b.dataset.i); S.sel = S.sel === i ? null : i; renderGroup();
     const r = $('grows').querySelector('.sel'); if (r) r.scrollIntoView({ block:'nearest' }); };
-  const sh = $('startHere'); if (sh) sh.onclick = () => adminDo('final', { d:S.day, s:S.sel, e:S.sel + L });
+  const sh = $('startHere'); if (sh) sh.onclick = () => adminDo('final', { d:S.day, s:S.sel, e:S.sel + L }, sh, 'Setting the time…');
+  // A stretch longer than the meeting opens a row of start times; an exact fit is chosen straight away.
   pane.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => {
-    const x = best[Number(b.dataset.pick)]; adminDo('final', { d:x.d, s:x.s, e:x.s + L }); });
+    const k = Number(b.dataset.pick), x = best[k];
+    if (x.e - x.s > L) { S.pickStretch = S.pickStretch === k ? null : k; renderGroup(); }
+    else adminDo('final', { d:x.d, s:x.s, e:x.s + L }, b, 'Setting…'); });
+  pane.querySelectorAll('[data-start]').forEach(b => b.onclick = () => {
+    const x = best[S.pickStretch], st = Number(b.dataset.start); S.pickStretch = null;
+    adminDo('final', { d:x.d, s:st, e:st + L }, b, 'Setting…'); });
+  const pc = $('pickCancel'); if (pc) pc.onclick = () => { S.pickStretch = null; renderGroup(); };
   bindAdmin();
 }
 function lengthWords(m) { return m % 60 ? m + '-minute' : (m / 60) + '-hour'; }
@@ -684,18 +706,29 @@ function adminCard() {
 }
 function bindAdmin() {
   if (!S.p.isAdmin) return;
-  $('aClose').onclick = () => adminDo(S.p.status === 'closed' ? 'reopen' : 'close');
+  $('aClose').onclick = () => adminDo(S.p.status === 'closed' ? 'reopen' : 'close', null, $('aClose'),
+    S.p.status === 'closed' ? 'Reopening…' : 'Closing…');
   // Remove takes two taps: the first turns the button red and asks again, so nothing goes by accident.
   $('pane').querySelectorAll('[data-rm]').forEach(b => b.onclick = () => {
-    if (b.classList.contains('confirm')) { b.disabled = true; b.textContent = 'Removing…'; adminDo('remove', b.dataset.rm); return; }
+    if (b.classList.contains('confirm')) { b.classList.remove('confirm'); adminDo('remove', b.dataset.rm, b, 'Removing…'); return; }
     b.classList.add('confirm'); b.textContent = 'Tap again to remove';
     setTimeout(() => { if (!b.disabled) { b.classList.remove('confirm'); b.textContent = 'Remove'; } }, 4000);
   });
 }
-function adminDo(action, value) {
+// Organizer actions. The tapped button shows a spinner and a "…ing" label right away, and the
+// other organizer buttons pause, so it's clear something is happening and nothing gets tapped twice.
+function adminDo(action, value, btn, label) {
+  const others = [...document.querySelectorAll('#app .btn:not(:disabled)')].filter(b => b !== btn);
+  let before = '';
+  if (btn) { before = btn.textContent; btn.classList.add('working'); btn.textContent = label || 'Working…'; if ('disabled' in btn) btn.disabled = true; }
+  others.forEach(b => b.disabled = true);
   call('adminUpdate', [S.id, S.admin, action, value, S.me && S.me.email], p => {
-    loadPoll(p); renderPoll(); if (action === 'final') window.scrollTo(0, 0);
-  }, msg => { const e = $('aErr'); if (e) e.textContent = msg; else showMsg(msg); });
+    S.pickStretch = null; loadPoll(p); renderPoll(); if (action === 'final') window.scrollTo(0, 0);
+  }, msg => {
+    if (btn) { btn.classList.remove('working'); btn.textContent = before; if ('disabled' in btn) btn.disabled = false; }
+    others.forEach(b => b.disabled = false);
+    const e = $('aErr'); if (e) e.textContent = msg; else showMsg(msg);
+  });
 }
 // Shows an error at the top of the page (instead of a pop-up box).
 function showMsg(msg) {
