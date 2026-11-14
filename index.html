@@ -24,30 +24,30 @@
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root { --ink:#1b2333; --quiet:#5f6368; --line:#e3e6ea; --bg:#ffffff; --soft:#f4f6f9;
-          --c:#0f766e; --cfg:#ffffff; --heat:#0f766e; }
+          --c:#0f766e; --cfg:#ffffff; --heat:#0f766e; --fs:1; }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   body { margin:0; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-         color:var(--ink); background:var(--soft); font-size:16px; line-height:1.4; }
+         color:var(--ink); background:var(--soft); font-size:calc(16px * var(--fs)); line-height:1.4; }
   button, input, select, textarea { font:inherit; color:inherit; }
   .band { background:var(--c); color:var(--cfg); padding:16px 16px 14px; }
-  .band .kicker { font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:.85; }
-  .band h1 { font-family:"EB Garamond", Georgia, serif; font-weight:600; font-size:26px; margin:2px 0 0; line-height:1.15; }
-  .band .sub { font-size:14px; opacity:.9; margin-top:4px; }
+  .band .kicker { font-size:calc(12px * var(--fs)); letter-spacing:.08em; text-transform:uppercase; opacity:.85; }
+  .band h1 { font-family:"EB Garamond", Georgia, serif; font-weight:600; font-size:calc(26px * var(--fs)); margin:2px 0 0; line-height:1.15; }
+  .band .sub { font-size:calc(14px * var(--fs)); opacity:.9; margin-top:4px; }
   main { max-width:640px; margin:0 auto; padding:12px 12px 120px; }
   .card { background:var(--bg); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:12px; }
-  .card h2 { font-size:16px; margin:0 0 10px; }
-  label.f { display:block; font-size:14px; font-weight:600; margin:12px 0 4px; }
+  .card h2 { font-size:calc(16px * var(--fs)); margin:0 0 10px; }
+  label.f { display:block; font-size:calc(14px * var(--fs)); font-weight:600; margin:12px 0 4px; }
   label.f:first-child { margin-top:0; }
-  .hint { font-size:13px; color:var(--quiet); }
+  .hint { font-size:calc(13px * var(--fs)); color:var(--quiet); }
   input[type=text], input[type=email], input[type=date], select, textarea {
-    width:100%; font-size:16px; padding:10px 12px; border:1px solid #c9ced6; border-radius:10px; background:#fff; }
+    width:100%; font-size:calc(16px * var(--fs)); padding:10px 12px; border:1px solid #c9ced6; border-radius:10px; background:#fff; }
   textarea { min-height:70px; resize:vertical; }
   .two { display:flex; gap:10px; } .two > div { flex:1; min-width:0; }
-  .btn { border:0; border-radius:12px; padding:12px 16px; font-size:16px; font-weight:600;
+  .btn { border:0; border-radius:12px; padding:12px 16px; font-size:calc(16px * var(--fs)); font-weight:600;
          background:var(--c); color:var(--cfg); cursor:pointer; }
   .btn.wide { width:100%; }
   .btn.ghost { background:#fff; color:var(--ink); border:1px solid #c9ced6; font-weight:500; }
-  .btn.small { padding:8px 12px; font-size:14px; border-radius:10px; min-height:44px; }
+  .btn.small { padding:8px 12px; font-size:calc(14px * var(--fs)); border-radius:10px; min-height:44px; }
   .btn.confirm { background:#b3261e; color:#fff; border-color:#b3261e; }
   .tap { display:inline-block; padding:10px 2px; }   /* small text links get a thumb-sized tap area */
   .btn:disabled { opacity:.55; }
@@ -58,17 +58,17 @@
     border:2px solid currentColor; border-right-color:transparent; border-radius:50%; animation:spin .7s linear infinite; }
   @keyframes spin { to { transform:rotate(360deg); } }
   .seg { display:flex; background:var(--soft); border-radius:12px; padding:3px; gap:3px; }
-  .seg button { flex:1; border:0; background:none; padding:9px 6px; border-radius:10px; font-size:15px; cursor:pointer; min-height:44px; }
+  .seg button { flex:1; border:0; background:none; padding:9px 6px; border-radius:10px; font-size:calc(15px * var(--fs)); cursor:pointer; min-height:44px; }
   .seg button[aria-pressed=true] { background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.12); font-weight:600; }
   .chips { display:flex; gap:6px; flex-wrap:wrap; }
-  .chip { border:2px solid transparent; border-radius:999px; padding:6px 14px; font-size:14px; cursor:pointer; min-height:44px; }
+  .chip { border:2px solid transparent; border-radius:999px; padding:6px 14px; font-size:calc(14px * var(--fs)); cursor:pointer; min-height:44px; }
   .chip[aria-pressed=true] { border-color:var(--ink); box-shadow:0 0 0 2px #fff inset; }
   /* month calendar */
   .cal-head { display:flex; justify-content:space-between; align-items:center; margin:8px 0 6px; font-weight:600; }
-  .cal-head button { border:1px solid var(--line); background:#fff; border-radius:10px; width:44px; height:44px; font-size:18px; cursor:pointer; }
+  .cal-head button { border:1px solid var(--line); background:#fff; border-radius:10px; width:44px; height:44px; font-size:calc(18px * var(--fs)); cursor:pointer; }
   .cal { display:grid; grid-template-columns:repeat(7, 1fr); gap:4px; text-align:center; }
-  .cal .dow { font-size:12px; color:var(--quiet); padding:4px 0; }
-  .cal button { aspect-ratio:1; border:1px solid var(--line); background:#fff; border-radius:10px; font-size:15px; cursor:pointer; padding:0; }
+  .cal .dow { font-size:calc(12px * var(--fs)); color:var(--quiet); padding:4px 0; }
+  .cal button { aspect-ratio:1; border:1px solid var(--line); background:#fff; border-radius:10px; font-size:calc(15px * var(--fs)); cursor:pointer; padding:0; }
   .cal button.on { background:var(--c); color:var(--cfg); border-color:var(--c); font-weight:600; }
   .cal button:disabled { opacity:.3; cursor:default; }
   /* day tabs */
@@ -76,11 +76,11 @@
   .days::-webkit-scrollbar { display:none; }
   .day { flex:none; min-width:62px; border:1px solid var(--line); background:#fff; border-radius:12px; padding:6px 8px;
          text-align:center; cursor:pointer; position:relative; }
-  .day b { display:block; font-size:13px; } .day span { font-size:13px; color:var(--quiet); }
+  .day b { display:block; font-size:calc(13px * var(--fs)); } .day span { font-size:calc(13px * var(--fs)); color:var(--quiet); }
   .day[aria-pressed=true] { background:var(--ink); color:#fff; border-color:var(--ink); }
   .day[aria-pressed=true] span { color:#d6dae0; }
   .day .pip { position:absolute; top:5px; right:6px; width:7px; height:7px; border-radius:50%; background:var(--heat); }
-  .day .best { display:block; font-size:11px; margin-top:2px; }
+  .day .best { display:block; font-size:calc(11px * var(--fs)); margin-top:2px; }
   .tabs { position:sticky; top:0; z-index:3; background:var(--soft); padding:8px 0; }
   .tools { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
   /* time rows */
@@ -89,36 +89,36 @@
          background:#fff; padding:0 12px; text-align:left; cursor:pointer; gap:10px; }
   .row:first-child { border-top:0; }
   .row.hour { border-top-color:#c9ced6; }
-  .row .t { width:72px; flex:none; font-size:14px; color:var(--quiet); font-variant-numeric:tabular-nums; }
-  .row .v { flex:1; font-size:14px; }
+  .row .t { width:calc(72px * var(--fs)); flex:none; font-size:calc(14px * var(--fs)); color:var(--quiet); font-variant-numeric:tabular-nums; }
+  .row .v { flex:1; font-size:calc(14px * var(--fs)); }
   .row.on { background:var(--heat); color:#fff; }
   /* Half hours Ken's Outlook calendar shows as busy: striped grey and locked */
   .row.busy { background:repeating-linear-gradient(135deg, #eef0f3 0 8px, #e3e6ea 8px 16px); color:var(--quiet); cursor:default; }
-  .note { background:#eef6f5; border-color:#cfe5e2; font-size:14px; }
+  .note { background:#eef6f5; border-color:#cfe5e2; font-size:calc(14px * var(--fs)); }
   .row.on .t { color:rgba(255,255,255,.85); }
   .row .bar { flex:1; height:26px; border-radius:7px; background:var(--soft); position:relative; overflow:hidden; }
   .row .bar i { position:absolute; inset:0 auto 0 0; background:var(--heat); border-radius:7px; }
-  .row .n { width:48px; flex:none; text-align:right; font-size:14px; font-variant-numeric:tabular-nums; }
+  .row .n { width:calc(48px * var(--fs)); flex:none; text-align:right; font-size:calc(14px * var(--fs)); font-variant-numeric:tabular-nums; }
   .row.sel { outline:2px solid var(--ink); outline-offset:-2px; }
-  .who { padding:10px 12px 12px; background:var(--soft); font-size:14px; border-top:1px solid var(--line); }
+  .who { padding:10px 12px 12px; background:var(--soft); font-size:calc(14px * var(--fs)); border-top:1px solid var(--line); }
   .who .yes { color:var(--ink); } .who .no { color:var(--quiet); margin-top:4px; }
   /* overview heatmap */
   .heat { display:grid; gap:2px; }
-  .heat .h { font-size:10px; color:var(--quiet); text-align:center; white-space:nowrap; overflow:hidden; }
-  .heat .tl { font-size:10px; color:var(--quiet); text-align:right; padding-right:4px; line-height:9px; }
+  .heat .h { font-size:calc(10px * var(--fs)); color:var(--quiet); text-align:center; white-space:nowrap; overflow:hidden; }
+  .heat .tl { font-size:calc(10px * var(--fs)); color:var(--quiet); text-align:right; padding-right:4px; line-height:9px; }
   .heat button { height:9px; border:0; padding:0; border-radius:2px; background:var(--soft); cursor:pointer; }
-  .legend { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--quiet); margin-top:8px; }
+  .legend { display:flex; align-items:center; gap:6px; font-size:calc(12px * var(--fs)); color:var(--quiet); margin-top:8px; }
   .legend i { width:16px; height:10px; border-radius:2px; display:inline-block; }
   .best li { list-style:none; border-top:1px solid var(--line); padding:10px 0; display:flex; gap:10px; align-items:center; }
   .best li:first-child { border-top:0; padding-top:2px; }
   .best ul { margin:0; padding:0; }
-  .best .when { font-weight:600; } .best .meta { font-size:13px; color:var(--quiet); }
+  .best .when { font-weight:600; } .best .meta { font-size:calc(13px * var(--fs)); color:var(--quiet); }
   .best .grow { flex:1; min-width:0; }
-  .pill { display:inline-block; font-size:12px; font-weight:600; padding:2px 8px; border-radius:999px; background:var(--soft); }
+  .pill { display:inline-block; font-size:calc(12px * var(--fs)); font-weight:600; padding:2px 8px; border-radius:999px; background:var(--soft); }
   .final { background:var(--ink); color:#fff; border:0; }
   .final a { color:#fff; }
   .link { display:flex; gap:8px; align-items:center; }
-  .link code { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px;
+  .link code { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:calc(13px * var(--fs));
                background:var(--soft); padding:10px; border-radius:8px; }
   .people li { list-style:none; display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-top:1px solid var(--line); gap:8px; }
   .people ul { margin:0; padding:0; }
@@ -126,10 +126,40 @@
   .bar-foot { position:fixed; left:0; right:0; bottom:0; background:#fff; border-top:1px solid var(--line);
               padding:10px 12px calc(10px + env(safe-area-inset-bottom)); z-index:5; display:none; }
   .bar-foot .in { max-width:640px; margin:0 auto; display:flex; gap:10px; align-items:center; }
-  .bar-foot .msg { flex:1; font-size:14px; color:var(--quiet); }
-  .err { color:#b10202; font-size:14px; margin-top:8px; }
+  .bar-foot .msg { flex:1; font-size:calc(14px * var(--fs)); color:var(--quiet); }
+  .err { color:#b10202; font-size:calc(14px * var(--fs)); margin-top:8px; }
   .center { text-align:center; padding:40px 16px; color:var(--quiet); }
   .sr { position:absolute; left:-9999px; }
+  /* ---------- Accessibility (guest links only) ---------- */
+  button { line-height:1.25; white-space:normal; }
+  :focus-visible { outline:3px solid var(--ink); outline-offset:2px; }
+  #title:focus, .a11y h2:focus { outline:none; }
+  .sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+  .band { position:relative; padding-right:68px; }
+  .a11y-btn { position:absolute; top:12px; right:12px; width:48px; height:44px; border-radius:10px; border:2px solid rgba(255,255,255,.75);
+              background:rgba(255,255,255,.12); color:#fff; font-weight:700; font-size:18px; cursor:pointer; }
+  .a11y { background:#fff; border-bottom:1px solid var(--line); }
+  .a11y .in { max-width:640px; margin:0 auto; padding:12px; }
+  .a11y h2 { font-size:calc(17px * var(--fs)); margin:0 0 8px; }
+  .a11y .lbl { font-weight:600; font-size:calc(14px * var(--fs)); margin:12px 0 4px; }
+  .chk { display:flex; align-items:center; gap:10px; min-height:44px; font-size:calc(15px * var(--fs)); cursor:pointer; margin-top:6px; }
+  .chk input { width:22px; height:22px; flex:none; }
+  .fs-l .two { flex-direction:column; gap:0; }
+  .fs-l .link { flex-wrap:wrap; } .fs-l .link code { flex-basis:100%; }
+  .fs-l .best li, .fs-l .people li { flex-wrap:wrap; }
+  .fs-l .bar-foot .in { flex-wrap:wrap; } .fs-l .bar-foot .msg { flex-basis:100%; }
+  .fs-l .seg { flex-wrap:wrap; } .fs-l .seg button { flex:1 1 40%; }
+  .fs-l .row .t { width:auto; min-width:calc(72px * var(--fs)); }
+  .hc { --ink:#000; --quiet:#222; --line:#444; --soft:#e9e9e9; }
+  .hc body { background:#fff; }
+  .hc .card, .hc .rows, .hc .day, .hc input, .hc select, .hc textarea, .hc .btn.ghost { border:2px solid #000; }
+  .hc .hint, .hc .meta, .hc .legend { color:#222; }
+  .hc .row.on .v::before { content:'✓ '; }
+  .hc .row.on { background-image:repeating-linear-gradient(135deg, rgba(255,255,255,.18) 0 6px, transparent 6px 12px); }
+  .hc a { text-decoration:underline; }
+  .hc .note { background:#e6f2f0; border-color:#000; }
+  .hc .heat button { outline:1px solid #888; }
+  @media (prefers-reduced-motion: reduce) { .working::before { animation:none; } .btn:active:not(:disabled) { transform:none; } }
 </style>
 </head>
 <body>
@@ -137,7 +167,30 @@
   <div class="kicker">Meet with Ken</div>
   <h1 id="title">Find a time together</h1>
   <div class="sub" id="sub"></div>
+  <button type="button" class="a11y-btn" id="a11yBtn" hidden aria-expanded="false" aria-controls="a11yPanel" aria-label="Text size, contrast and read aloud">Aa</button>
 </header>
+<!-- Display and reading options for guests. Choices are remembered in this browser. -->
+<div class="a11y" id="a11yPanel" hidden>
+  <div class="in">
+    <h2>Text, contrast and reading</h2>
+    <div class="lbl" id="lFs">Text size</div>
+    <div class="seg" id="aFs" role="group" aria-labelledby="lFs">
+      <button type="button" data-v="1">Standard</button><button type="button" data-v="1.2">Larger</button><button type="button" data-v="1.4">Largest</button></div>
+    <div class="lbl" id="lHc">Contrast</div>
+    <div class="seg" id="aHc" role="group" aria-labelledby="lHc">
+      <button type="button" data-v="0">Standard</button><button type="button" data-v="1">High contrast</button></div>
+    <div id="aSpeech">
+      <div class="lbl">Read aloud</div>
+      <div class="tools"><button type="button" class="btn small" id="aRead">🔊 Read this page</button>
+        <button type="button" class="btn small ghost" id="aStop">Stop</button></div>
+      <label class="chk"><input type="checkbox" id="aSpeak"> Speak each time as I tap it</label>
+      <div class="hint">Use VoiceOver or TalkBack? This page works with them; you can leave these off.</div>
+    </div>
+    <button type="button" class="btn small ghost" id="aDone" style="margin-top:12px">Done</button>
+  </div>
+</div>
+<!-- Screen readers hear this box whenever something changes (saved, opened). -->
+<div class="sr" id="sr" aria-live="polite" role="status"></div>
 <main id="app"><div class="center">Loading…</div></main>
 <div class="bar-foot" id="foot"><div class="in"><div class="msg" id="footMsg"></div>
   <button class="btn" id="saveBtn" type="button">Save my times</button></div></div>
@@ -347,7 +400,7 @@ function openPoll(id, admin) {
     if (!p) { $('app').innerHTML = '<div class="center">We couldn\'t find this poll. Check the link and try again.</div>'; return; }
     loadPoll(p);
     if (S.p.final || S.p.status === 'closed' || (S.mine && S.mine.indexOf(1) !== -1 && !S.dirty)) S.tab = 'group';
-    renderPoll();
+    renderPoll(); focusTitle(); announce('Poll opened: ' + p.title);
   }, () => { $('app').innerHTML = '<div class="center">Something went wrong. Try again in a moment.</div>'; });
 }
 
@@ -400,7 +453,7 @@ function renderPoll() {
 function finalCard() {
   const f = S.p.final, d = S.p.days[f.d], a = S.p.start + f.s * STEP, b = a + S.p.length;
   return '<div class="card final"><div class="hint" style="color:#d6dae0">Meeting time chosen</div>' +
-    '<div style="font-size:20px;font-weight:600;margin:4px 0 8px">' + dayLong(d) + ', ' + span(a, b) + ' ' + esc(S.p.tz) + '</div>' +
+    '<div style="font-size:calc(20px * var(--fs));font-weight:600;margin:4px 0 8px">' + dayLong(d) + ', ' + span(a, b) + ' ' + esc(S.p.tz) + '</div>' +
     '<a href="' + esc(calLink(d, a, b)) + '" target="_blank" rel="noopener">Add to Google Calendar</a>' +
     (S.p.isAdmin ? ' &nbsp;·&nbsp; <a href="#" class="tap" id="unfinal">Undo</a>' : '') + '</div>';
 }
@@ -418,7 +471,7 @@ function calLink(day, a, b) {
 
 function dayTabs(extra) {
   return '<div class="days" id="dayTabs">' + S.p.days.map((d, i) =>
-    '<button type="button" class="day" data-i="' + i + '" aria-pressed="' + (i === S.day) + '">' +
+    '<button type="button" class="day" data-i="' + i + '" aria-pressed="' + (i === S.day) + '" aria-label="' + dayLong(d) + '">' +
     (extra ? extra(i) : '') + '<b>' + dayShort(d) + '</b><span>' + dayNum(d) + '</span></button>').join('') + '</div>';
 }
 function bindDayTabs(redraw) {
@@ -435,7 +488,7 @@ function renderMine() {
   let rows = '';
   for (let i = 0; i < n; i++) {
     const m = p.start + i * STEP, on = S.mine[base + i] === 1, busy = isBusy(base + i);
-    rows += '<button type="button" class="row' + (on ? ' on' : '') + (busy ? ' busy' : '') + (m % 60 === 0 ? ' hour' : '') + '" data-i="' + i + '"' + (locked || busy ? ' disabled' : '') + '>' +
+    rows += '<button type="button" class="row' + (on ? ' on' : '') + (busy ? ' busy' : '') + (m % 60 === 0 ? ' hour' : '') + '" data-i="' + i + '" aria-pressed="' + on + '" aria-label="' + esc(slotSpeech(S.day, i, on, busy)) + '"' + (locked || busy ? ' disabled' : '') + '>' +
       '<span class="t">' + clock(m) + '</span><span class="v">' + (busy ? 'Busy in Outlook' : on ? 'Free' : '') + '</span></button>';
   }
   pane.innerHTML =
@@ -466,6 +519,10 @@ function renderMine() {
   bindPaint($('rows'), base);
 }
 
+// What a half hour says to screen readers and read-aloud, e.g. "Mon, Nov 23, 9:30 am, free".
+function slotSpeech(d, i, on, busy) {
+  return dayLong(S.p.days[d]) + ', ' + clock(S.p.start + i * STEP) + (busy ? ', not available' : on ? ', free' : ', not marked');
+}
 function isBusy(k) { return !!(S.busy && S.busy[k]); }
 
 // Tap toggles a half hour. With a mouse you can also click and drag to paint a stretch.
@@ -473,6 +530,8 @@ function bindPaint(box, base) {
   let painting = false, val = 1, mouse = false;
   const set = btn => { const i = Number(btn.dataset.i); if (S.mine[base + i] === val || isBusy(base + i)) return;
     S.mine[base + i] = val; btn.classList.toggle('on', val === 1); btn.querySelector('.v').textContent = val ? 'Free' : '';
+    btn.setAttribute('aria-pressed', val === 1); btn.setAttribute('aria-label', slotSpeech(S.day, i, val === 1, false));
+    if (A.speak) say(slotSpeech(S.day, i, val === 1, false));
     S.dirty = true; updateFoot(); };
   box.addEventListener('pointerdown', e => {
     if (e.pointerType !== 'mouse') return;
@@ -525,7 +584,7 @@ function updateFoot() {
 function saveTimes() {
   S.saving = true; updateFoot();
   call('saveResponse', [S.id, S.me.name, S.me.email, S.mine.join(''), S.admin], p => {
-    S.saving = false; S.dirty = false; loadPoll(p); S.tab = 'group'; S.justSaved = true; renderPoll();
+    S.saving = false; S.dirty = false; loadPoll(p); S.tab = 'group'; S.justSaved = true; renderPoll(); announce('Saved. You are all set.');
     window.scrollTo(0, 0);
   }, msg => { S.saving = false; updateFoot(); $('footMsg').textContent = msg;
     const h = $('saveHint'); if (h) { h.textContent = msg; h.className = 'err'; } });
@@ -603,7 +662,8 @@ function renderGroup() {
   for (let i = 0; i < n; i++) {
     const m = p.start + i * STEP, free = freeAt(S.day, i), sel = S.sel === i;
     h += '<button type="button" class="row' + (m % 60 === 0 ? ' hour' : '') + (sel ? ' sel' : '') + '" data-i="' + i + '">' +
-      '<span class="t">' + clock(m) + '</span><span class="bar"><i style="width:' + (100 * free.length / total) + '%"></i></span>' +
+      '<span class="t">' + clock(m) + '</span><span class="bar" aria-hidden="true"><i style="width:' + (100 * free.length / total) + '%"></i></span>' +
+      '<span class="sr">, ' + free.length + ' of ' + total + ' free</span>' +
       '<span class="n">' + free.length + '/' + total + '</span></button>';
     if (sel) {
       const no = p.people.filter(x => free.indexOf(x) === -1);
@@ -721,6 +781,7 @@ function adminDo(action, value, btn, label) {
   const others = [...document.querySelectorAll('#app .btn:not(:disabled)')].filter(b => b !== btn);
   let before = '';
   if (btn) { before = btn.textContent; btn.classList.add('working'); btn.textContent = label || 'Working…'; if ('disabled' in btn) btn.disabled = true; }
+  announce(label || 'Working…');
   others.forEach(b => b.disabled = true);
   call('adminUpdate', [S.id, S.admin, action, value, S.me && S.me.email], p => {
     S.pickStretch = null; loadPoll(p); renderPoll(); if (action === 'final') window.scrollTo(0, 0);
@@ -737,11 +798,71 @@ function showMsg(msg) {
   box.textContent = msg; window.scrollTo(0, 0);
 }
 
+// ===================== Accessibility (guest links only) =====================
+// Text size (words only), contrast, read aloud, speak-as-I-tap. Remembered in this browser.
+// The "Aa" button shows only on guest links; Ken's start page and organizer view stay as they are.
+const A = Object.assign({ fs:1, hc:null, speak:false }, store.get('mwk-a11y') || {});
+const canSpeak = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
+let guestView = false;
+function applyA11y() {
+  const root = document.documentElement, on = guestView;
+  const hc = A.hc === null ? !!(window.matchMedia && matchMedia('(prefers-contrast: more)').matches) : !!A.hc;
+  root.style.setProperty('--fs', on ? A.fs : 1);
+  root.classList.toggle('fs-l', on && A.fs > 1);
+  root.classList.toggle('hc', on && hc);
+  $('a11yBtn').hidden = !on;
+  if (!on) $('a11yPanel').hidden = true;
+  $('aFs').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', Number(b.dataset.v) === A.fs));
+  $('aHc').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', (b.dataset.v === '1') === hc));
+  $('aSpeak').checked = !!A.speak;
+}
+function saveA11y() { store.set('mwk-a11y', A); applyA11y(); }
+function announce(msg) { const r = $('sr'); r.textContent = ''; setTimeout(() => r.textContent = msg, 50); }
+function focusTitle() { const t = $('title'); t.setAttribute('tabindex', '-1'); try { t.focus({ preventScroll:true }); } catch (e) {} }
+// Speaks text in the device's own voice. Works around browser quirks:
+//  - stopping and starting speech in the same instant can come out silent in Chrome, so new speech
+//    waits a moment after stopping, but speaks right away when nothing is playing (iPhones need that);
+//  - Chrome cuts off long speech after about 15 seconds, so long text is spoken a sentence at a time.
+function say(text) {
+  if (!canSpeak) return;
+  const parts = String(text).match(/[^.!?]+[.!?]*/g) || [String(text)];
+  const go = () => parts.forEach(p => {
+    const u = new SpeechSynthesisUtterance(p.trim()); u.lang = 'en-US'; u.rate = 1;
+    (say.keep = say.keep || []).push(u); if (say.keep.length > 40) say.keep.shift();   // keeps Chrome from dropping it
+    speechSynthesis.speak(u);
+  });
+  if (speechSynthesis.paused) speechSynthesis.resume();
+  if (speechSynthesis.speaking || speechSynthesis.pending) { speechSynthesis.cancel(); setTimeout(go, 120); }
+  else go();
+}
+function readPage() {
+  const app = $('app').cloneNode(true);
+  // Dropdowns are read as their chosen option (e.g. the time zone), not the whole list.
+  app.querySelectorAll('select').forEach(x => { const o = x.querySelector('option[selected]') || x.options[0]; x.replaceWith(o ? o.textContent : ''); });
+  app.querySelectorAll('.rows, .heat, .days, code, .legend, .sr').forEach(x => x.remove());
+  app.querySelectorAll('h2, div, li, label, button, p').forEach(x => x.insertAdjacentText('afterend', '. '));
+  const slots = document.querySelectorAll('#rows .row').length;
+  say([$('title').textContent, $('sub').textContent, app.textContent.replace(/\s+/g, ' ').replace(/(\.\s*)+/g, '. ')].join('. ') +
+    (slots ? '. There are ' + slots + ' times below. Turn on "speak each time as I tap it" to hear each one.' : ''));
+}
+$('a11yBtn').onclick = () => {
+  const open = $('a11yPanel').hidden;
+  $('a11yPanel').hidden = !open; $('a11yBtn').setAttribute('aria-expanded', open);
+  if (open) { const h = $('a11yPanel').querySelector('h2'); h.setAttribute('tabindex', '-1'); h.focus(); }
+};
+$('aDone').onclick = () => { $('a11yPanel').hidden = true; $('a11yBtn').setAttribute('aria-expanded', 'false'); $('a11yBtn').focus(); };
+$('aFs').onclick = e => { const b = e.target.closest('button'); if (!b) return; A.fs = Number(b.dataset.v); saveA11y(); };
+$('aHc').onclick = e => { const b = e.target.closest('button'); if (!b) return; A.hc = b.dataset.v === '1'; saveA11y(); };
+$('aSpeak').onchange = () => { A.speak = $('aSpeak').checked; saveA11y(); if (A.speak) say('Speaking on. Tap a time to hear it.'); };
+if (canSpeak) { $('aRead').onclick = readPage; $('aStop').onclick = () => speechSynthesis.cancel(); }
+else $('aSpeech').hidden = true;
+
 // ===================== Start =====================
 function route() {
   const h = decodeURIComponent(String(location.hash || '').replace(/^#/, '')).trim();
   const m = h.match(/^([A-Za-z]{8})(?:-([A-Za-z]{16}))?$/);
   S.dirty = false; S.tab = 'mine'; S.day = 0; S.sel = null;
+  guestView = !!m && !m[2]; applyA11y();          // the Aa options are for guest links only
   if (m) openPoll(m[1], m[2]); else renderCreate();
 }
 window.addEventListener('hashchange', route);
