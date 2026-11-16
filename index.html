@@ -406,6 +406,8 @@ function openPoll(id, admin) {
 
 function loadPoll(p) {
   S.p = p; setType(p.type);
+  // Organizer link: no "Who's answering?" — it's Ken. (Not saved in the browser, so guest tests stay separate.)
+  if (p.isAdmin && p.kenEmail) S.me = { name: p.organizer || 'Ken', email: p.kenEmail };
   const mineRow = p.people.filter(x => x.me)[0];
   S.saved = !!mineRow;
   if (!S.dirty) S.mine = mineRow ? mineRow.slots.split('').map(Number) : new Array(p.days.length * N()).fill(0);
@@ -518,7 +520,7 @@ function renderMine() {
     (S.calNote ? '<div class="card note">' + esc(S.calNote) + '</div>' : '') +
     (locked ? '' : '<div class="card" style="padding:10px 14px"><b>1.</b> Tap every half hour you\'re free. Use the date tabs to switch days.<br><b>2.</b> Tap <b>Send my times</b> at the bottom.<br><b>3.</b> ' +
       (p.isAdmin ? 'Then use the <b>Group</b> tab to pick the time.' : 'That\'s it. You\'re done! ' + esc(p.organizer) + ' will let you know the final time.') + '</div>') +
-    '<div class="hint" style="margin-bottom:8px">Answering as <b>' + esc(S.me.name) + '</b> · <a href="#" class="tap" id="notMe">not you?</a></div>' +
+    '<div class="hint" style="margin-bottom:8px">Answering as <b>' + esc(S.me.name) + '</b>' + (p.isAdmin ? '' : ' · <a href="#" class="tap" id="notMe">not you?</a>') + '</div>' +
     dayTabs(i => S.mine.slice(i * n, i * n + n).indexOf(1) !== -1 ? '<span class="pip"></span>' : '') +
     (locked ? '' : '<div class="tools"><button type="button" class="btn small ghost" data-a="all">Free all day</button>' +
       '<button type="button" class="btn small ghost" data-a="clear">Clear day</button>' +
@@ -529,7 +531,7 @@ function renderMine() {
       '<div class="hint" id="saveHint" style="margin-top:6px;text-align:center"></div>');
   bindDayTabs(renderMine);
   if (!locked) { $('saveBottom').onclick = saveTimes; updateFoot(); }
-  $('notMe').onclick = e => { e.preventDefault(); S.me = null; S.dirty = false; S.mine = null; store.set('mf-me', null); openPoll(S.id, S.admin); };
+  if ($('notMe')) $('notMe').onclick = e => { e.preventDefault(); S.me = null; S.dirty = false; S.mine = null; store.set('mf-me', null); openPoll(S.id, S.admin); };
   if (locked) return;
   pane.querySelector('.tools').onclick = e => {
     const b = e.target.closest('button'); if (!b) return;
