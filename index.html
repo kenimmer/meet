@@ -193,7 +193,7 @@
 <div class="sr" id="sr" aria-live="polite" role="status"></div>
 <main id="app"><div class="center">Loading…</div></main>
 <div class="bar-foot" id="foot"><div class="in"><div class="msg" id="footMsg"></div>
-  <button class="btn" id="saveBtn" type="button">Save my times</button></div></div>
+  <button class="btn" id="saveBtn" type="button">Send my times</button></div></div>
 
 <script>
 // ▼▼▼ Paste your Apps Script web app address here (Deploy → Manage deployments → the URL ending in /exec)
@@ -429,13 +429,29 @@ function loadPoll(p) {
   $('sub').textContent = 'With ' + p.organizer + ' · times are ' + p.tz;
 }
 
+function isDaysPoll() { return S.p && S.p.kind === 'days'; }
 function renderPoll() {
   const p = S.p;
   let h = '';
+  // One plain line on what this is, for guests and organizers alike. People expected to "book" a time.
+  const what = isDaysPoll() ? 'dates' : 'time';
+  h += '<div class="card" style="padding:10px 14px"><b>📅 How this works:</b> ' + (p.isAdmin
+    ? 'guests tap the ' + (what === 'dates' ? 'dates they can make' : 'times they\'re free') + ' and send them. You see where everyone overlaps and pick the ' + what + '.'
+    : 'tap the ' + (what === 'dates' ? 'dates you can make' : 'times you\'re free') + ' and send them. ' + esc(p.organizer) + ' sees everyone\'s answers and picks the ' + what + ' that works best. Nothing is booked until then.') + '</div>';
   // Organizer view: say so plainly, and hand over the guest link right here.
-  if (p.isAdmin) h += '<div class="card note"><b>🔒 Your private organizer view.</b> Don\'t send this page\'s address. To invite people, send the guest link:' +
-    '<div class="link" style="margin-top:8px"><code>' + esc(APP_URL + '#' + p.id) + '</code><button class="btn small" type="button" id="aCopy">Copy</button></div></div>';
-  if (S.justSaved) h += '<div class="card note" role="status"><b>✓ Your times are saved.</b> You\'re all set and can close this page. To change them later, open the same link again.</div>';
+  // Organizer tools live at the top so they're easy to find: guest link, pick the time, close the poll.
+  if (p.isAdmin) h += '<div class="card note"><h2 style="margin-bottom:6px">🔒 Organizer tools</h2>' +
+    '<div>This page is just for you. Don\'t send its address. To invite people, send the guest link:</div>' +
+    '<div class="link" style="margin-top:8px"><code>' + esc(APP_URL + '#' + p.id) + '</code><button class="btn small" type="button" id="aCopy">Copy</button></div>' +
+    '<div class="tools" style="margin:10px 0 0">' +
+      (!p.final && S.tab !== 'group' ? '<button type="button" class="btn small" id="aPick">See answers &amp; pick the ' + what + '</button>' : '') +
+      '<button type="button" class="btn small ghost" id="aClose">' + (p.status === 'closed' ? 'Reopen the poll' : 'Close the poll') + '</button></div>' +
+    '<div class="hint" style="margin-top:6px">' + (p.status === 'closed' ? 'The poll is closed: answers can\'t change. Reopen it anytime.' : 'Closing stops new answers. You can reopen it anytime.') + '</div>' +
+    '<div class="err" id="aErr" role="alert"></div></div>';
+  if (S.justSaved) h += '<div class="card note" role="status">' + (p.isAdmin
+    ? '<b>✓ Sent.</b> Your answer is in. Pick the ' + (isDaysPoll() ? 'dates' : 'time') + ' below when you\'re ready.'
+    : '<b>✓ Sent. You\'re done!</b> You can close this page. ' + esc(p.organizer) + ' will let you know the final ' + (isDaysPoll() ? 'dates' : 'time') +
+      '. To change your answer, open the same link again.') + '</div>';
   if (p.final) h += finalCard();
   if (p.note) h += '<div class="card" style="white-space:pre-wrap">' + esc(p.note) + '</div>';
   if (p.status === 'closed' && !p.final) h += '<div class="card"><b>This poll is closed.</b> <span class="hint">Answers can no longer change.</span></div>';
@@ -446,19 +462,24 @@ function renderPoll() {
   $('tabs').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.tab = b.dataset.t; S.sel = null; S.justSaved = false; renderPoll(); };
   if (p.isAdmin) $('aCopy').onclick = e => copyText(e.target, APP_URL + '#' + p.id);
   if (S.tab === 'mine') renderMine(); else renderGroup();
+  bindAdmin();          // the organizer tools at the top work on both tabs
   updateFoot();
   if (p.final) bindFinal();
 }
 
 function finalCard() {
   const f = S.p.final, d = S.p.days[f.d], a = S.p.start + f.s * STEP, b = a + S.p.length;
+  const when = parseDay(d).toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' }) + ', ' + span(a, b) + ' ' + S.p.tz + ' time';
+  S.finalText = S.p.title + ': ' + when;     // what "Copy date & time" puts on the clipboard
   return '<div class="card final"><div class="hint" style="color:#d6dae0">Meeting time chosen</div>' +
-    '<div style="font-size:calc(20px * var(--fs));font-weight:600;margin:4px 0 8px">' + dayLong(d) + ', ' + span(a, b) + ' ' + esc(S.p.tz) + '</div>' +
+    '<div style="font-size:calc(20px * var(--fs));font-weight:600;margin:4px 0 8px">' + esc(when) + '</div>' +
+    '<button type="button" class="btn small ghost" id="finalCopy" style="margin-bottom:8px">📋 Copy date &amp; time</button><br>' +
     '<a href="' + esc(calLink(d, a, b)) + '" target="_blank" rel="noopener">Add to Google Calendar</a>' +
     (S.p.isAdmin ? ' &nbsp;·&nbsp; <a href="#" class="tap" id="unfinal">Undo</a>' : '') + '</div>';
 }
 function bindFinal() {
   const u = $('unfinal'); if (u) u.onclick = e => { e.preventDefault(); adminDo('final', null, u, 'Undoing…'); };
+  const fc = $('finalCopy'); if (fc) fc.onclick = () => copyText(fc, S.finalText);
 }
 function calLink(day, a, b) {
   const stamp = m => day.replace(/-/g, '') + 'T' + String(Math.floor(m / 60)).padStart(2, '0') + String(m % 60).padStart(2, '0') + '00';
@@ -494,7 +515,8 @@ function renderMine() {
   pane.innerHTML =
     (p.busyError ? '<div class="card err" role="alert">' + esc(p.busyError) + '</div>' : '') +
     (S.calNote ? '<div class="card note">' + esc(S.calNote) + '</div>' : '') +
-    (locked ? '' : '<div class="card" style="padding:10px 14px"><b>1.</b> Tap every half hour you\'re free. Use the date tabs to switch days.<br><b>2.</b> Tap <b>Save my times</b> at the bottom.</div>') +
+    (locked ? '' : '<div class="card" style="padding:10px 14px"><b>1.</b> Tap every half hour you\'re free. Use the date tabs to switch days.<br><b>2.</b> Tap <b>Send my times</b> at the bottom.<br><b>3.</b> ' +
+      (p.isAdmin ? 'Then use the <b>Group</b> tab to pick the time.' : 'That\'s it. You\'re done! ' + esc(p.organizer) + ' will let you know the final time.') + '</div>') +
     '<div class="hint" style="margin-bottom:8px">Answering as <b>' + esc(S.me.name) + '</b> · <a href="#" class="tap" id="notMe">not you?</a></div>' +
     dayTabs(i => S.mine.slice(i * n, i * n + n).indexOf(1) !== -1 ? '<span class="pip"></span>' : '') +
     (locked ? '' : '<div class="tools"><button type="button" class="btn small ghost" data-a="all">Free all day</button>' +
@@ -571,20 +593,21 @@ function renderWho() {
 function updateFoot() {
   const show = S.tab === 'mine' && S.me && S.p && S.p.status !== 'closed' && (S.dirty || S.saving);
   $('foot').style.display = show ? 'block' : 'none';
-  $('footMsg').textContent = S.saving ? 'Saving…' : 'You have changes that aren\'t saved yet.';
+  $('footMsg').textContent = S.saving ? 'Sending…' : 'Not sent yet. Tap the button to send.';
+  $('saveBtn').textContent = S.saving ? 'Sending…' : 'Send my times';
   $('saveBtn').disabled = S.saving; $('saveBtn').classList.toggle('working', !!S.saving);
   const b = $('saveBottom'), hint = $('saveHint');
   if (b) {
     const done = S.saved && !S.dirty && !S.saving;
-    b.textContent = S.saving ? 'Saving…' : done ? '✓ Saved' : 'Save my times';
+    b.textContent = S.saving ? 'Sending…' : done ? '✓ Sent' : 'Send my times';
     b.disabled = S.saving || done; b.classList.toggle('working', !!S.saving);
-    hint.className = 'hint'; hint.textContent = done ? 'Your times are saved. Change anything above to update them.' : '';
+    hint.className = 'hint'; hint.textContent = done ? 'Sent. You\'re done! Change anything above and send again to update it.' : '';
   }
 }
 function saveTimes() {
   S.saving = true; updateFoot();
   call('saveResponse', [S.id, S.me.name, S.me.email, S.mine.join(''), S.admin], p => {
-    S.saving = false; S.dirty = false; loadPoll(p); S.tab = 'group'; S.justSaved = true; renderPoll(); announce('Saved. You are all set.');
+    S.saving = false; S.dirty = false; loadPoll(p); S.tab = 'group'; S.justSaved = true; renderPoll(); announce('Sent. You are done.');
     window.scrollTo(0, 0);
   }, msg => { S.saving = false; updateFoot(); $('footMsg').textContent = msg;
     const h = $('saveHint'); if (h) { h.textContent = msg; h.className = 'err'; } });
@@ -755,19 +778,17 @@ function renderMyPolls(body) {
 
 // ---------- Organizer tools ----------
 function adminCard() {
-  const p = S.p; if (!p.isAdmin) return '';
-  const share = APP_URL + '#' + p.id;
-  return '<div class="card"><h2>Organizer tools</h2>' +
-    '<button type="button" class="btn small ghost" id="aClose">' + (p.status === 'closed' ? 'Reopen the poll' : 'Close the poll') + '</button>' +
-    (p.people.length ? '<div class="people" style="margin-top:12px"><div class="hint" style="margin-bottom:4px">' + p.people.length + ' of ' + p.max + ' people</div><ul>' +
-      p.people.map(x => '<li><span>' + esc(x.name) + ' <span class="hint">' + esc(x.email) + '</span></span>' +
-        '<button type="button" class="btn small ghost" data-rm="' + esc(x.email) + '">Remove</button></li>').join('') + '</ul></div>' : '') +
-    '<div class="err" id="aErr" role="alert"></div></div>';
+  const p = S.p; if (!p.isAdmin || !p.people.length) return '';
+  return '<div class="card people"><h2>People who answered</h2><div class="hint" style="margin-bottom:4px">' + p.people.length + ' of ' + p.max + ' people</div><ul>' +
+    p.people.map(x => '<li><span>' + esc(x.name) + ' <span class="hint">' + esc(x.email) + '</span></span>' +
+      '<button type="button" class="btn small ghost" data-rm="' + esc(x.email) + '">Remove</button></li>').join('') + '</ul></div>';
 }
 function bindAdmin() {
   if (!S.p.isAdmin) return;
-  $('aClose').onclick = () => adminDo(S.p.status === 'closed' ? 'reopen' : 'close', null, $('aClose'),
-    S.p.status === 'closed' ? 'Reopening…' : 'Closing…');
+  const c = $('aClose');
+  if (c) c.onclick = () => adminDo(S.p.status === 'closed' ? 'reopen' : 'close', null, c, S.p.status === 'closed' ? 'Reopening…' : 'Closing…');
+  const pk = $('aPick');
+  if (pk) pk.onclick = () => { S.tab = 'group'; S.sel = null; S.justSaved = false; renderPoll(); window.scrollTo(0, 0); };
   // Remove takes two taps: the first turns the button red and asks again, so nothing goes by accident.
   $('pane').querySelectorAll('[data-rm]').forEach(b => b.onclick = () => {
     if (b.classList.contains('confirm')) { b.classList.remove('confirm'); adminDo('remove', b.dataset.rm, b, 'Removing…'); return; }
