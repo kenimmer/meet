@@ -451,7 +451,8 @@ function renderPoll() {
   if (S.justSaved) h += '<div class="card note" role="status">' + (p.isAdmin
     ? '<b>✓ Sent.</b> Your answer is in. Pick the ' + (isDaysPoll() ? 'dates' : 'time') + ' below when you\'re ready.'
     : '<b>✓ Sent. You\'re done!</b> You can close this page. ' + esc(p.organizer) + ' will let you know the final ' + (isDaysPoll() ? 'dates' : 'time') +
-      '. To change your answer, open the same link again.') + '</div>';
+      '. To change your answer, open the same link again.' +
+      (S.me && S.me.email ? '<div style="margin-top:6px">📧 We emailed a confirmation to <b>' + esc(S.me.email) + '</b> (check spam if you don\'t see it).</div>' : '')) + '</div>';
   if (p.final) h += finalCard();
   if (p.note) h += '<div class="card" style="white-space:pre-wrap">' + esc(p.note) + '</div>';
   if (p.status === 'closed' && !p.final) h += '<div class="card"><b>This poll is closed.</b> <span class="hint">Answers can no longer change.</span></div>';
